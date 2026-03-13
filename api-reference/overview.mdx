@@ -1,0 +1,169 @@
+---
+title: 'API Overview'
+description: 'Complete API reference for the Verbalize linting service'
+---
+
+## Introduction
+
+The Verbalize API provides a REST endpoint for linting technical documentation using Vale. It analyzes text against industry-standard style guides (Google, Microsoft, Red Hat) and custom rules to ensure consistency and clarity in your documentation.
+
+## Base URL
+
+All API requests are made to your deployed Verbalize instance:
+
+```
+https://your-domain.com/api
+```
+
+For local development:
+
+```
+http://localhost:3000/api
+```
+
+## Available Endpoints
+
+<Card title="POST /api/lint" icon="check" href="/api-reference/lint">
+  Analyze text against Vale style guides and return linting alerts
+</Card>
+
+## Authentication
+
+The Verbalize API currently does not require authentication. All endpoints are publicly accessible.
+
+<Warning>
+  Consider implementing authentication if you deploy this service to production with sensitive content or need to control access.
+</Warning>
+
+## Rate Limits
+
+There are no explicit rate limits configured by default. However, serverless deployments (e.g., Netlify Functions) have the following constraints:
+
+- **Request Timeout**: 10 seconds (default) to 30 seconds (configurable)
+- **Concurrent Requests**: Limited by your hosting plan
+- **Text Size Limit**: 1MB per request (enforced by the API)
+
+## Request/Response Format
+
+All requests must use `Content-Type: application/json`.
+
+All responses return JSON with appropriate HTTP status codes:
+
+- `200` - Success
+- `400` - Bad Request (validation error)
+- `500` - Internal Server Error (Vale execution failure)
+
+## Error Handling
+
+Error responses follow a consistent structure:
+
+```json
+{
+  "error": "Error message describing what went wrong"
+}
+```
+
+### Common Error Scenarios
+
+| Error | Status Code | Cause |
+|-------|-------------|-------|
+| No text provided or invalid format | 400 | Missing or non-string `text` field |
+| Text exceeds maximum allowed length | 400 | Text exceeds 1MB (1,048,576 characters) |
+| Invalid style guide selected | 400 | Style not in whitelist (Google, Microsoft, RedHat) |
+| Too many custom rules | 400 | More than 10 custom rules provided |
+| Rule exceeds maximum length | 400 | Individual rule content exceeds 10KB |
+| Vale execution failed | 500 | Internal error during linting process |
+| Failed to parse Vale output | 500 | Vale returned invalid JSON |
+
+## Supported Style Guides
+
+Verbalize supports the following pre-configured style guides:
+
+<CardGroup cols={3}>
+  <Card title="Google" icon="google">
+    Google Developer Documentation Style Guide
+  </Card>
+  <Card title="Microsoft" icon="microsoft">
+    Microsoft Writing Style Guide
+  </Card>
+  <Card title="RedHat" icon="hat-wizard">
+    Red Hat Documentation Style Guide
+  </Card>
+</CardGroup>
+
+## Custom Rules
+
+In addition to built-in style guides, you can upload custom Vale rules (`.yml` format) to enforce organization-specific style requirements.
+
+See the [lint endpoint documentation](/api-reference/lint#custom-rules) for details on how to include custom rules in your requests.
+
+## TypeScript Support
+
+The Verbalize API returns typed responses that match the Vale alert structure:
+
+```typescript
+interface ValeAlert {
+  Action: {
+    Name: string;
+    Params: string[] | null;
+  };
+  Span: [number, number];
+  Check: string;
+  Description: string;
+  Link: string;
+  Message: string;
+  Severity: string;
+  Match: string;
+  Line: number;
+}
+
+interface CustomRule {
+  name: string;
+  content: string;
+}
+
+interface LintRequest {
+  text: string;
+  style: 'Google' | 'Microsoft' | 'RedHat';
+  customRules?: CustomRule[];
+}
+
+type LintResponse = ValeAlert[];
+```
+
+## SDK and Examples
+
+The Verbalize frontend (`app/page.tsx`) serves as a reference implementation. Key example:
+
+```typescript
+const response = await fetch('/api/lint', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ 
+    text: normalizedText, 
+    style: 'Google', 
+    customRules: [] 
+  }),
+});
+
+const data = await response.json();
+
+if (response.ok && Array.isArray(data)) {
+  // Process ValeAlert[] array
+  console.log(`Found ${data.length} issues`);
+} else {
+  // Handle error response
+  console.error('Error:', data.error);
+}
+```
+
+## Resources
+
+<CardGroup cols={2}>
+  <Card title="Vale Documentation" icon="book" href="https://vale.sh/docs/">
+    Learn about Vale linting engine and rule syntax
+  </Card>
+  <Card title="Custom Rules Guide" icon="wrench" href="https://vale.sh/docs/topics/styles/">
+    Create custom Vale rules for your organization
+  </Card>
+</CardGroup>

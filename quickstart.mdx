@@ -1,80 +1,271 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quickstart Guide
+description: Get up and running with Verbalize in minutes
+icon: rocket
 ---
 
-## Get started in three steps
+## Welcome to Verbalize
 
-Get your documentation site running locally and make your first customization.
+This quickstart guide will help you start linting your documentation in just a few steps. Whether you're using Verbalize online or running it locally, you'll be validating your content against professional style guides in minutes.
 
-### Step 1: Set up your local environment
+## Access Verbalize
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
+<Steps>
+  <Step title="Open the Application">
+    Navigate to the Verbalize web application in your browser. If you're running locally, start the development server first:
     
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
+    ```bash
+    npm run dev
+    ```
     
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+    Then open `http://localhost:3000` in your browser.
+  </Step>
 
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
+  <Step title="Familiarize Yourself with the Interface">
+    The application has three main panels:
     
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+    - **Left**: Settings sidebar with style guide selection and custom rules upload
+    - **Center**: Editor (left) and live preview (right) panels
+    - **Right**: Linting alerts panel showing detected issues
+  </Step>
+</Steps>
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+## Your First Linting Session
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+<Steps>
+  <Step title="Write or Paste Documentation">
+    In the **Editor** panel (center-left), type or paste your Markdown documentation. For example:
+    
+    ```markdown
+    # Getting Started
+    
+    You can use the API to access our endpoints. We will send you an email when your request is processed.
+    
+    Please login to your account to continue.
+    ```
+  </Step>
 
-### Step 3: Go live
+  <Step title="Select a Style Guide">
+    In the **Settings** sidebar on the left:
+    
+    1. Locate the **Base Style Guide** dropdown
+    2. Choose from three options:
+       - **Google Developer** - API documentation and developer-focused content
+       - **Microsoft Writing** - Consumer-facing and enterprise documentation
+       - **Red Hat Style** - Open-source and enterprise software documentation
+    
+    For this example, select **Google Developer**.
+  </Step>
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+  <Step title="Run the Linter">
+    Click the **Run Linting** button at the bottom of the Settings sidebar. The button displays "Analyzing..." while processing.
+  </Step>
 
-## Next steps
+  <Step title="Review the Results">
+    Alerts appear in the **Linting Alerts** panel on the right. Each alert shows:
+    
+    - **Severity badge** (Error, Warning, or Suggestion)
+    - **Line number** where the issue occurs
+    - **Message** describing the problem
+    - **Rule name** that triggered the alert
+    - **Link** to the style guide reference (if available)
+    
+    For our example text, you might see:
+    
+    - **Warning** (Line 3): Use second person ("you") instead of first person ("we")
+    - **Error** (Line 5): Use "sign in" instead of "login"
+  </Step>
 
-Now that you have your docs running, explore these key features:
+  <Step title="Fix Issues">
+    Click any alert card to jump directly to that location in the editor. The text is automatically highlighted. Make your corrections:
+    
+    ```markdown
+    # Getting Started
+    
+    You can use the API to access our endpoints. You will receive an email when your request is processed.
+    
+    Please sign in to your account to continue.
+    ```
+  </Step>
+
+  <Step title="Re-run and Verify">
+    Click **Run Linting** again to verify your fixes. The alerts panel should now show fewer issues or be empty (with a green checkmark).
+  </Step>
+</Steps>
+
+## Understanding the Interface
+
+### Settings Sidebar
 
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Base Style Guide" icon="book">
+    Select which industry-standard style guide to validate against (Google, Microsoft, or Red Hat)
+  </Card>
+  
+  <Card title="Document Upload" icon="file-arrow-up">
+    Upload `.md` or `.mdx` files directly instead of copy-pasting
+  </Card>
+  
+  <Card title="Custom Rules" icon="file-code">
+    Upload your own Vale rule files (`.yml` format) to extend the base style guide
+  </Card>
+  
+  <Card title="Run Linting" icon="play">
+    Execute Vale analysis on your current document
+  </Card>
 </CardGroup>
 
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>
+### Editor Panel
+
+The center-left panel is where you write your documentation:
+
+- **Markdown support**: Full Markdown syntax with live preview
+- **Character counter**: Displays current document size
+- **Synchronized scrolling**: Preview panel scrolls in sync
+- **Copy/clear buttons**: Quick actions in the toolbar
+
+### Preview Panel
+
+The center-right panel shows a rendered preview of your Markdown:
+
+- **Real-time rendering**: Updates as you type
+- **Typography styling**: Proper heading hierarchy, code blocks, and formatting
+- **Scroll synchronization**: Stays aligned with the editor
+
+### Linting Alerts Panel
+
+The right panel displays all detected issues:
+
+- **Severity levels**: Color-coded badges (red = error, yellow = warning, blue = suggestion)
+- **Total count**: Badge showing number of issues
+- **Click to navigate**: Jump to any issue in the editor
+- **External links**: Access style guide documentation for each rule
+
+## Using Custom Rules
+
+<Steps>
+  <Step title="Create a Vale Rule File">
+    Create a `.yml` file with your custom validation rules. For example, save this as `ProductNames.yml`:
+    
+    ```yaml
+    extends: substitution
+    message: Use '%s' instead of '%s'
+    level: error
+    ignorecase: true
+    swap:
+      my product: MyProduct
+      my company: MyCompany
+    ```
+  </Step>
+
+  <Step title="Upload the Rule">
+    1. In the Settings sidebar, find the **Custom Rules** section
+    2. Click **Upload .yml rule**
+    3. Select your `ProductNames.yml` file
+    4. The rule appears as a chip below the upload button
+  </Step>
+
+  <Step title="Run Linting with Custom Rules">
+    Click **Run Linting**. Your custom rules now validate the document alongside the base style guide rules.
+  </Step>
+</Steps>
+
+<Info>
+  You can upload up to **10 custom rules** at once, each up to **10KB** in size. Custom rules are combined with your selected base style guide.
+</Info>
+
+## Document Management
+
+### Uploading Documents
+
+Instead of pasting text, you can upload Markdown files:
+
+1. Click the **Upload MD/MDX** button in the Settings sidebar
+2. Select a `.md` or `.mdx` file from your computer
+3. The file content loads into the editor automatically
+
+### Downloading Your Work
+
+While Verbalize doesn't have an explicit download button, you can:
+
+- **Copy the text**: Click the copy icon in the editor toolbar
+- **Paste elsewhere**: Use the copied content in your preferred editor
+- **Save locally**: Copy and save in your local environment
+
+## Keyboard Shortcuts & Tips
+
+- **Focus editor**: Click anywhere in the editor panel
+- **Select all**: `Ctrl+A` (or `Cmd+A` on Mac)
+- **Copy**: `Ctrl+C` (or `Cmd+C` on Mac)
+- **Undo/Redo**: Standard `Ctrl+Z` and `Ctrl+Y` keyboard shortcuts work
+- **Clear editor**: Use the trash icon in the toolbar (asks for confirmation)
+
+## Toggle Dark Mode
+
+Switch between light and dark themes using the sun/moon icon in the top-right header. Your preference is saved automatically.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="No alerts appearing after linting">
+    This could mean:
+    - Your document has no style violations (✓)
+    - The linting request failed (check browser console for errors)
+    - The selected style guide doesn't have rules for your content type
+    
+    Try running the linter again or selecting a different style guide.
+  </Accordion>
+
+  <Accordion title="Linting takes too long">
+    Large documents (>50KB) or many custom rules can increase processing time. Consider:
+    - Breaking large documents into smaller sections
+    - Reducing the number of custom rules
+    - Checking your internet connection (if using online)
+  </Accordion>
+
+  <Accordion title="Can't upload custom rules">
+    Ensure your file:
+    - Has a `.yml` extension
+    - Is valid YAML syntax
+    - Is under 10KB in size
+    - You haven't already uploaded 10 rules (remove one first)
+  </Accordion>
+
+  <Accordion title="Preview not rendering correctly">
+    The preview uses GitHub-flavored Markdown. If something doesn't render:
+    - Check your Markdown syntax
+    - Ensure proper spacing around elements (e.g., blank lines before lists)
+    - Try refreshing the page
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+Now that you know the basics, explore more:
+
+<CardGroup cols={2}>
+  <Card title="Understanding Results" icon="chart-line" href="/user-guide/understanding-results">
+    Learn how to interpret and prioritize linting alerts
+  </Card>
+  
+  <Card title="Style Guides" icon="book-open" href="/user-guide/style-guides">
+    Deep dive into Google, Microsoft, and Red Hat style guides
+  </Card>
+  
+  <Card title="Custom Rules" icon="file-code" href="/user-guide/custom-rules">
+    Create advanced custom Vale rules for your organization
+  </Card>
+  
+  <Card title="Configuration" icon="gear" href="/configuration/vale-config">
+    Configure Vale settings and deployment options
+  </Card>
+</CardGroup>
+
+## Get Help
+
+If you encounter issues or have questions:
+
+- Check the [User Guide](/user-guide/using-the-editor) for detailed feature documentation
+- Review the [API Reference](/api-reference/overview) if integrating Verbalize
+- Visit the [GitHub repository](https://github.com/mtgr18977/verbalize) to report bugs or request features
+- Read the [Contributing Guide](/development/contributing) to help improve Verbalize

@@ -1,0 +1,664 @@
+---
+title: Contributing Guidelines
+description: How to contribute to Verbalize development
+icon: code-pull-request
+---
+
+## Welcome Contributors!
+
+Thank you for your interest in contributing to **Verbalize**! Whether you're fixing bugs, adding features, improving documentation, or suggesting enhancements, your contributions are valued.
+
+<Info>
+  This guide covers code contributions. All contributions are welcome, including bug fixes, features, and documentation improvements.
+</Info>
+
+## Getting Started
+
+### Prerequisites
+
+Before contributing, ensure you have:
+
+- ✅ Node.js 20 or later installed
+- ✅ Git configured with your name and email
+- ✅ GitHub account
+- ✅ Basic understanding of TypeScript and React
+- ✅ Familiarity with Next.js (helpful but not required)
+
+### First-Time Setup
+
+<Steps>
+  <Step title="Fork the repository">
+    1. Visit [github.com/yourusername/verbalize](https://github.com/yourusername/verbalize)
+    2. Click the **Fork** button in the top-right
+    3. This creates a copy under your GitHub account
+  </Step>
+
+  <Step title="Clone your fork">
+    ```bash
+    git clone https://github.com/YOUR_USERNAME/verbalize.git
+    cd verbalize
+    ```
+  </Step>
+
+  <Step title="Add upstream remote">
+    ```bash
+    git remote add upstream https://github.com/original/verbalize.git
+    git fetch upstream
+    ```
+
+    This lets you sync with the main repository later.
+  </Step>
+
+  <Step title="Install dependencies">
+    ```bash
+    npm install
+    ```
+
+    This installs packages and the Vale binary automatically.
+  </Step>
+
+  <Step title="Create a branch">
+    ```bash
+    git checkout -b feature/your-feature-name
+    ```
+
+    Use descriptive branch names:
+    - `feature/dark-mode-toggle`
+    - `fix/vale-timeout-error`
+    - `docs/update-readme`
+  </Step>
+</Steps>
+
+## Development Workflow
+
+### Making Changes
+
+<Steps>
+  <Step title="Start the dev server">
+    ```bash
+    npm run dev
+    ```
+
+    The app runs at [http://localhost:3000](http://localhost:3000)
+  </Step>
+
+  <Step title="Make your changes">
+    Edit files in your editor. Hot reload is enabled, so changes appear immediately.
+  </Step>
+
+  <Step title="Test your changes">
+    - Manually test in the browser
+    - Run automated tests:
+      ```bash
+      npm test
+      ```
+    - Run linter:
+      ```bash
+      npm run lint
+      ```
+  </Step>
+
+  <Step title="Commit your changes">
+    ```bash
+    git add .
+    git commit -m "feat: add dark mode toggle button"
+    ```
+
+    Follow [Conventional Commits](#commit-message-format) format.
+  </Step>
+
+  <Step title="Push to your fork">
+    ```bash
+    git push origin feature/your-feature-name
+    ```
+  </Step>
+</Steps>
+
+### Opening a Pull Request
+
+<Steps>
+  <Step title="Navigate to the repository">
+    Go to the original repository on GitHub.
+  </Step>
+
+  <Step title="Click 'New Pull Request'">
+    Select **compare across forks** and choose your branch.
+  </Step>
+
+  <Step title="Fill out the PR template">
+    Provide:
+    - **Clear title**: "Add dark mode toggle to header"
+    - **Description**: What changed and why
+    - **Screenshots**: If UI changed
+    - **Related issues**: Link to issue numbers
+    - **Checklist**: Confirm tests pass
+  </Step>
+
+  <Step title="Submit and wait for review">
+    Maintainers will review your PR. They may:
+    - Approve and merge
+    - Request changes
+    - Ask questions
+
+    Be patient and responsive to feedback!
+  </Step>
+</Steps>
+
+## Code Standards
+
+### TypeScript Guidelines
+
+<Tabs>
+  <Tab title="Strict Mode">
+    All code must pass TypeScript strict mode:
+
+    ```json tsconfig.json
+    {
+      "compilerOptions": {
+        "strict": true,
+        "noImplicitAny": true,
+        "strictNullChecks": true
+      }
+    }
+    ```
+
+    ❌ **Avoid:**
+    ```typescript
+    function process(data: any) {  // Don't use 'any'
+      return data.value;
+    }
+    ```
+
+    ✅ **Prefer:**
+    ```typescript
+    interface Data {
+      value: string;
+    }
+
+    function process(data: Data): string {
+      return data.value;
+    }
+    ```
+  </Tab>
+
+  <Tab title="Explicit Types">
+    Always declare return types for functions:
+
+    ❌ **Avoid:**
+    ```typescript
+    function calculateTotal(items) {
+      return items.reduce((sum, item) => sum + item.price, 0);
+    }
+    ```
+
+    ✅ **Prefer:**
+    ```typescript
+    interface Item {
+      price: number;
+    }
+
+    function calculateTotal(items: Item[]): number {
+      return items.reduce((sum, item) => sum + item.price, 0);
+    }
+    ```
+  </Tab>
+
+  <Tab title="Interface vs Type">
+    Use `interface` for object shapes, `type` for unions:
+
+    ```typescript
+    // ✅ Interface for objects
+    interface User {
+      id: string;
+      name: string;
+      email: string;
+    }
+
+    // ✅ Type for unions
+    type Status = 'idle' | 'loading' | 'success' | 'error';
+
+    // ✅ Type for intersections
+    type AdminUser = User & { role: 'admin' };
+    ```
+  </Tab>
+
+  <Tab title="Null Safety">
+    Handle nullable values explicitly:
+
+    ❌ **Avoid:**
+    ```typescript
+    function getLength(text: string | null) {
+      return text.length;  // Error: might be null
+    }
+    ```
+
+    ✅ **Prefer:**
+    ```typescript
+    function getLength(text: string | null): number {
+      return text?.length ?? 0;
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Code Conventions
+
+| Convention | Standard | Example |
+|-----------|----------|----------|
+| **Files** | kebab-case | `lint-results.tsx` |
+| **Components** | PascalCase | `LintEditor.tsx` |
+| **Functions** | camelCase | `processLintResults()` |
+| **Interfaces** | PascalCase | `ValeAlert`, `CustomRule` |
+| **Constants** | UPPER_SNAKE_CASE | `MAX_FILE_SIZE` |
+| **CSS Classes** | Tailwind utilities | `flex items-center gap-2` |
+
+### Import Order
+
+Organize imports in this order:
+
+```typescript
+// 1. React imports
+import { useState, useEffect } from 'react';
+
+// 2. External libraries
+import { AlertCircle } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+
+// 3. Internal components
+import { LintEditor } from '@/components/LintEditor';
+import { ResultsPanel } from '@/components/ResultsPanel';
+
+// 4. Types
+import type { ValeAlert, CustomRule } from '@/types';
+
+// 5. Utilities
+import { formatDiagnostic } from '@/lib/utils';
+```
+
+### React Patterns
+
+<AccordionGroup>
+  <Accordion title="Functional Components">
+    Use functional components with hooks:
+
+    ```typescript
+    interface EditorProps {
+      initialValue?: string;
+      onLint: (text: string) => Promise<void>;
+      disabled?: boolean;
+    }
+
+    export function Editor({ 
+      initialValue = '', 
+      onLint, 
+      disabled = false 
+    }: EditorProps) {
+      const [text, setText] = useState(initialValue);
+
+      const handleSubmit = async () => {
+        try {
+          await onLint(text);
+        } catch (error) {
+          console.error('Linting failed:', error);
+        }
+      };
+
+      return (
+        <div>
+          <textarea 
+            value={text} 
+            onChange={(e) => setText(e.target.value)}
+            disabled={disabled}
+          />
+          <button onClick={handleSubmit}>Lint</button>
+        </div>
+      );
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="State Management">
+    Use `useState` for component state:
+
+    ```typescript
+    // ✅ Good: Clear, typed state
+    const [results, setResults] = useState<ValeAlert[]>([]);
+    const [loading, setLoading] = useState<boolean>(false);
+
+    // ❌ Bad: Untyped state
+    const [results, setResults] = useState([]);
+    ```
+  </Accordion>
+
+  <Accordion title="Error Handling">
+    Always handle async errors:
+
+    ```typescript
+    const handleLint = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/lint', {
+          method: 'POST',
+          body: JSON.stringify({ text, style })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setResults(data);
+      } catch (error) {
+        console.error('Linting failed:', error);
+        alert('Failed to lint document');
+      } finally {
+        setLoading(false);
+      }
+    };
+    ```
+  </Accordion>
+
+  <Accordion title="Accessibility">
+    Include ARIA labels and keyboard navigation:
+
+    ```typescript
+    <textarea
+      value={text}
+      onChange={(e) => setText(e.target.value)}
+      aria-label="Documentation editor"
+      placeholder="Enter your documentation here"
+    />
+
+    <button
+      onClick={handleLint}
+      disabled={loading}
+      aria-busy={loading}
+      aria-label="Run linting"
+    >
+      {loading ? 'Analyzing...' : 'Lint Document'}
+    </button>
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Testing Requirements
+
+### Test Coverage
+
+All new features must include tests:
+
+<Tabs>
+  <Tab title="UI Features">
+    Write Playwright tests for user interactions:
+
+    ```typescript tests/new-feature.spec.ts
+    import { test, expect } from '@playwright/test';
+
+    test.describe('New Feature', () => {
+      test('should work as expected', async ({ page }) => {
+        await page.goto('/');
+        
+        // Arrange
+        const input = page.locator('input[name="setting"]');
+        
+        // Act
+        await input.fill('value');
+        await page.getByText('Save').click();
+        
+        // Assert
+        await expect(page.locator('.success')).toBeVisible();
+      });
+    });
+    ```
+  </Tab>
+
+  <Tab title="API Endpoints">
+    Test API routes with request context:
+
+    ```typescript tests/api.spec.ts
+    test('API should handle edge case', async ({ request }) => {
+      const response = await request.post('/api/lint', {
+        data: {
+          text: 'Test content',
+          style: 'Google'
+        }
+      });
+
+      expect(response.ok()).toBeTruthy();
+      const data = await response.json();
+      expect(Array.isArray(data)).toBeTruthy();
+    });
+    ```
+  </Tab>
+
+  <Tab title="Error Cases">
+    Test error handling:
+
+    ```typescript
+    test('should handle invalid input', async ({ request }) => {
+      const response = await request.post('/api/lint', {
+        data: {
+          text: 'x'.repeat(2_000_000), // Too large
+          style: 'Google'
+        }
+      });
+
+      expect(response.status()).toBe(400);
+      const data = await response.json();
+      expect(data.error).toContain('exceeds');
+    });
+    ```
+  </Tab>
+</Tabs>
+
+### Running Tests
+
+Before submitting a PR:
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in UI mode (debug)
+npx playwright test --ui
+
+# Run specific test file
+npx playwright test tests/your-feature.spec.ts
+```
+
+<Warning>
+  PRs with failing tests will not be merged. Ensure all tests pass locally before pushing.
+</Warning>
+
+## Commit Message Format
+
+Use [Conventional Commits](https://www.conventionalcommits.org/) format:
+
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+### Types
+
+- **feat**: New feature
+- **fix**: Bug fix
+- **docs**: Documentation changes
+- **style**: Code formatting (not CSS)
+- **refactor**: Code restructuring
+- **test**: Adding or updating tests
+- **chore**: Maintenance tasks
+
+### Examples
+
+<CodeGroup>
+```bash Feature
+git commit -m "feat(editor): add syntax highlighting for markdown
+
+Adds Monaco editor with markdown syntax highlighting.
+Includes light and dark themes.
+
+Closes #123"
+```
+
+```bash Bug Fix
+git commit -m "fix(api): handle Vale timeout errors gracefully
+
+Previously, Vale timeouts caused 500 errors.
+Now returns 504 with helpful message.
+
+Fixes #456"
+```
+
+```bash Documentation
+git commit -m "docs(readme): update installation instructions
+
+Clarifies Node.js version requirement.
+Adds troubleshooting section for Windows."
+```
+
+```bash Refactor
+git commit -m "refactor(lint): extract Vale execution to utility
+
+Moves Vale execution logic to lib/vale.ts.
+Improves testability and reusability."
+```
+</CodeGroup>
+
+## PR Checklist
+
+Before submitting your pull request, verify:
+
+<Tabs>
+  <Tab title="Code Quality">
+    - [ ] Code follows TypeScript and React conventions
+    - [ ] No TypeScript errors (`npm run build` succeeds)
+    - [ ] ESLint checks pass (`npm run lint`)
+    - [ ] No console errors in browser
+    - [ ] Imports are organized correctly
+  </Tab>
+
+  <Tab title="Testing">
+    - [ ] All existing tests pass (`npm test`)
+    - [ ] New tests added for new features
+    - [ ] Edge cases are tested
+    - [ ] Error handling is tested
+    - [ ] Manual testing completed
+  </Tab>
+
+  <Tab title="Documentation">
+    - [ ] Code is commented where necessary
+    - [ ] README updated if needed
+    - [ ] AGENTS.md updated for architectural changes
+    - [ ] API changes documented
+    - [ ] Breaking changes highlighted
+  </Tab>
+
+  <Tab title="Git Hygiene">
+    - [ ] Commits follow Conventional Commits format
+    - [ ] Commit messages are clear and descriptive
+    - [ ] Branch is up-to-date with main
+    - [ ] No merge conflicts
+    - [ ] No unrelated changes included
+  </Tab>
+</Tabs>
+
+## Code Review Process
+
+### What to Expect
+
+<Steps>
+  <Step title="Initial Review (1-3 days)">
+    A maintainer will review your PR and:
+    - Check code quality
+    - Run tests
+    - Verify functionality
+    - Suggest improvements
+  </Step>
+
+  <Step title="Feedback & Iteration">
+    Address review comments by:
+    - Making requested changes
+    - Explaining your approach if needed
+    - Asking questions if unclear
+    - Pushing new commits to the same branch
+  </Step>
+
+  <Step title="Approval">
+    Once approved, a maintainer will:
+    - Merge your PR
+    - Close related issues
+    - Add your contribution to the changelog
+  </Step>
+
+  <Step title="Deployment">
+    Your changes will be deployed:
+    - To staging immediately
+    - To production in the next release
+  </Step>
+</Steps>
+
+### Review Guidelines for Contributors
+
+<Info>
+  **Be patient**: Maintainers are volunteers and may take time to review.
+  
+  **Be responsive**: Address feedback promptly to keep the PR moving.
+  
+  **Be open**: Accept constructive criticism gracefully.
+</Info>
+
+## Getting Help
+
+### Resources
+
+<CardGroup cols={2}>
+  <Card title="Documentation" icon="book" href="/introduction">
+    Read the full documentation
+  </Card>
+
+  <Card title="Architecture" icon="sitemap" href="/development/architecture">
+    Understand the codebase structure
+  </Card>
+
+  <Card title="AGENTS.md" icon="file-code" href="https://github.com/yourusername/verbalize/blob/main/AGENTS.md">
+    Detailed technical context
+  </Card>
+
+  <Card title="Discussions" icon="comments" href="https://github.com/yourusername/verbalize/discussions">
+    Ask questions and share ideas
+  </Card>
+</CardGroup>
+
+### Contact
+
+- **GitHub Issues**: Report bugs or request features
+- **GitHub Discussions**: Ask questions or propose ideas
+- **Discord**: Join our community (link in README)
+- **Email**: contact@verbalize.dev
+
+## Recognition
+
+Contributors are recognized in:
+
+- 🏆 **README.md** - Contributors section
+- 📜 **CHANGELOG.md** - Release notes
+- 💬 **GitHub Releases** - Release announcements
+- ⭐ **All Contributors** - Visual recognition
+
+<Check>
+  Every contribution matters, no matter how small. Thank you for helping make Verbalize better!
+</Check>
+
+## License
+
+By contributing to Verbalize, you agree that your contributions will be licensed under the project's license (see LICENSE file in repository).
+
+---
+
+<Card title="Ready to contribute?" icon="rocket" href="https://github.com/yourusername/verbalize">
+  Visit the repository and pick an issue labeled **"good first issue"** to get started!
+</Card>

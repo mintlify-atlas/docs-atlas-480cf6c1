@@ -1,0 +1,279 @@
+---
+title: Local Development Setup
+description: Get Verbalize running on your local machine
+icon: laptop-code
+---
+
+## Overview
+
+Verbalize is built with **Next.js 16** (App Router), **TypeScript**, and **Tailwind CSS**. The Vale CLI is automatically installed during setup to provide prose linting capabilities.
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- **Node.js** 20 or later
+- **npm** (comes with Node.js)
+- **Git** for cloning the repository
+
+<Check>
+  The Vale binary installation is automated via the `postinstall` script - no manual installation required!
+</Check>
+
+## Installation Steps
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/yourusername/verbalize.git
+    cd verbalize
+    ```
+  </Step>
+
+  <Step title="Install dependencies">
+    ```bash
+    npm install
+    ```
+
+    This will:
+    - Install all Node.js dependencies from `package.json`
+    - Automatically run the `postinstall` script
+    - Download the Vale binary (v3.9.5) for your platform
+    - Extract Vale to the project root
+
+    <Accordion title="What gets installed?">
+      **Core Dependencies:**
+      - `next` (16.1.6) - Framework
+      - `react` (19.2.3) & `react-dom` (19.2.3) - UI library
+      - `typescript` (^5) - Type safety
+      - `tailwindcss` (^4) - Styling
+      - `lucide-react` (^0.563.0) - Icons
+      - `react-markdown` (^10.1.0) - Markdown rendering
+      - `next-themes` (^0.4.6) - Dark mode support
+
+      **Dev Dependencies:**
+      - `@playwright/test` (^1.58.1) - E2E testing
+      - `eslint` (^9) - Code linting
+    </Accordion>
+  </Step>
+
+  <Step title="Verify Vale installation">
+    Check that Vale was installed correctly:
+
+    ```bash
+    # On Linux/macOS
+    ./vale --version
+
+    # On Windows
+    .\vale.exe --version
+    ```
+
+    Expected output:
+    ```
+    vale version 3.9.5
+    ```
+
+    <Warning>
+      If Vale fails to install automatically, you can manually run:
+      ```bash
+      node scripts/install-vale.js
+      ```
+    </Warning>
+  </Step>
+
+  <Step title="Start the development server">
+    ```bash
+    npm run dev
+    ```
+
+    The application will start at **http://localhost:3000**
+
+    You should see output like:
+    ```
+    ▲ Next.js 16.1.6
+    - Local:        http://localhost:3000
+    - Ready in 1.2s
+    ```
+  </Step>
+
+  <Step title="Open the application">
+    Navigate to [http://localhost:3000](http://localhost:3000) in your browser.
+
+    You should see the Writer Assistant interface with:
+    - ✅ Settings sidebar (style guide selection, custom rules)
+    - ✅ Editor panel (markdown input)
+    - ✅ Preview panel (rendered markdown)
+    - ✅ Linting alerts panel (empty initially)
+  </Step>
+</Steps>
+
+## Environment Configuration
+
+### Optional Environment Variables
+
+Create a `.env.local` file in the project root for custom configuration:
+
+```bash .env.local
+# Vale Configuration (optional)
+VALE_CONFIG_PATH=./.vale.ini
+VALE_STYLES_PATH=./styles
+
+# Application Limits (optional)
+MAX_INPUT_SIZE=1048576  # 1MB default
+
+# Development Mode
+NODE_ENV=development
+
+# Debug Logging (optional)
+NEXT_PUBLIC_DEBUG=true
+DEBUG=vale:*
+```
+
+<Info>
+  All environment variables are optional. The application uses sensible defaults if not specified.
+</Info>
+
+## Development Scripts
+
+Here are the available npm scripts defined in `package.json`:
+
+| Command | Description | When to Use |
+|---------|-------------|-------------|
+| `npm run dev` | Start development server (port 3000) | Active development |
+| `npm run build` | Create production build | Pre-deployment testing |
+| `npm run start` | Start production server | Testing production build locally |
+| `npm run lint` | Run ESLint code checks | Code quality verification |
+| `npm test` | Run Playwright E2E tests | Before committing changes |
+
+### Example Development Workflow
+
+```bash
+# Start dev server
+npm run dev
+
+# In another terminal, run lint checks
+npm run lint
+
+# Run tests before committing
+npm test
+
+# Create production build to verify
+npm run build
+```
+
+## Project Structure
+
+Understanding the codebase layout:
+
+```
+verbalize/
+├── app/
+│   ├── api/
+│   │   └── lint/
+│   │       └── route.ts          # Vale API endpoint
+│   ├── layout.tsx                # Root layout with theme provider
+│   ├── page.tsx                  # Main UI (editor, preview, results)
+│   └── globals.css               # Global styles
+├── styles/
+│   ├── Google/                   # Google style guide rules
+│   ├── Microsoft/                # Microsoft style guide rules
+│   └── RedHat/                   # Red Hat style guide rules
+├── scripts/
+│   └── install-vale.js           # Automated Vale installation
+├── tests/
+│   ├── e2e.spec.ts              # End-to-end tests
+│   └── *.spec.ts                # Additional test files
+├── .vale.ini                     # Vale configuration
+├── playwright.config.ts          # Playwright test config
+├── tailwind.config.ts            # Tailwind CSS config
+├── tsconfig.json                 # TypeScript config
+├── package.json                  # Dependencies and scripts
+└── vale (or vale.exe)           # Vale binary (auto-installed)
+```
+
+## Troubleshooting
+
+### Vale Binary Not Found
+
+**Error:**
+```
+Error: spawn vale ENOENT
+```
+
+**Solution:**
+```bash
+# Manually install Vale
+node scripts/install-vale.js
+
+# Verify installation
+./vale --version
+```
+
+### Port 3000 Already in Use
+
+**Error:**
+```
+Error: Port 3000 is already in use
+```
+
+**Solution:**
+```bash
+# Kill the process using port 3000
+lsof -ti:3000 | xargs kill -9
+
+# Or start on a different port
+npm run dev -- -p 3001
+```
+
+### TypeScript Errors
+
+**Error:**
+```
+Type 'X' is not assignable to type 'Y'
+```
+
+**Solution:**
+```bash
+# Delete node_modules and reinstall
+rm -rf node_modules package-lock.json
+npm install
+
+# Or check TypeScript config
+cat tsconfig.json
+```
+
+### Style Guides Not Loading
+
+**Error:**
+```
+Error: Could not find style 'Google'
+```
+
+**Solution:**
+```bash
+# Verify styles directory exists
+ls -la styles/
+# Should show: Google/ Microsoft/ RedHat/
+
+# If missing, check git submodules or clone again
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Testing" icon="flask" href="/development/testing">
+    Learn how to run and write tests
+  </Card>
+  
+  <Card title="Architecture" icon="sitemap" href="/development/architecture">
+    Understand the system architecture
+  </Card>
+  
+  <Card title="Contributing" icon="code-pull-request" href="/development/contributing">
+    Guidelines for contributing code
+  </Card>
+  
+  <Card title="API Reference" icon="code" href="/api-reference">
+    Explore the API endpoints
+  </Card>
+</CardGroup>

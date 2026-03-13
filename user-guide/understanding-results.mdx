@@ -1,0 +1,315 @@
+---
+title: 'Understanding Results'
+description: 'Learn how to interpret and act on linting results from Vale'
+icon: 'chart-mixed'
+---
+
+## Overview
+
+After running the linter, Verbalize displays all style violations and suggestions in the **Linting Alerts** panel on the right side of the interface. Understanding these results helps you improve your documentation quality efficiently.
+
+## Results Panel
+
+The Linting Alerts panel shows:
+
+- **Total count** of issues detected (badge next to panel title)
+- **Individual alert cards** for each violation
+- **Empty state** when no issues are found
+
+## Alert Severity Levels
+
+Vale categorizes issues into three severity levels:
+
+<CardGroup cols={3}>
+  <Card title="Error" icon="circle-xmark" color="#ef4444">
+    **Critical issues** that violate mandatory style rules
+    
+    Must be fixed before publication
+  </Card>
+  <Card title="Warning" icon="triangle-exclamation" color="#f59e0b">
+    **Important suggestions** that should be addressed
+    
+    May affect readability or consistency
+  </Card>
+  <Card title="Suggestion" icon="lightbulb" color="#3b82f6">
+    **Optional improvements** to enhance quality
+    
+    Consider based on context
+  </Card>
+</CardGroup>
+
+## Alert Card Structure
+
+Each alert card displays detailed information about the violation:
+
+```
+┌─────────────────────────────────────────┐
+│ ERROR                       Line 42     │  ← Severity + Location
+│─────────────────────────────────────────│
+│ Use 'AM' or 'PM' (preceded by a space). │  ← Message
+│─────────────────────────────────────────│
+│ Google.AMPM                    🔗       │  ← Rule Name + Link
+└─────────────────────────────────────────┘
+```
+
+### Card Components
+
+| Component | Purpose | Example |
+|-----------|---------|----------|
+| **Severity Badge** | Indicates issue importance | `ERROR`, `WARNING`, `SUGGESTION` |
+| **Line Number** | Shows where the issue occurs | `Line 42` |
+| **Message** | Explains what's wrong | "Avoid first-person pronouns such as 'my'" |
+| **Rule Name** | Identifies the specific rule | `Google.FirstPerson` |
+| **External Link** | Links to style guide documentation | 🔗 (when available) |
+
+## Alert Interface (Technical)
+
+Each alert follows this TypeScript interface from `app/page.tsx:8`:
+
+```typescript
+interface ValeAlert {
+  Action: {
+    Name: string;           // Suggested action type
+    Params: string[] | null; // Action parameters
+  };
+  Span: [number, number];   // Character positions [start, end]
+  Check: string;            // Rule identifier (e.g., "Google.AMPM")
+  Description: string;      // Detailed explanation
+  Link: string;             // URL to style guide rule
+  Message: string;          // Human-readable message
+  Severity: string;         // "error", "warning", or "suggestion"
+  Match: string;            // The exact text that triggered the rule
+  Line: number;             // Line number (1-indexed)
+}
+```
+
+## Interacting with Results
+
+### Clicking on Alerts
+
+Click any alert card to:
+
+1. **Jump to the issue** in the editor
+2. **Highlight the problematic text** with automatic selection
+3. **Auto-scroll** to center the issue in view
+
+This makes fixing issues quick and precise.
+
+<Tip>
+  The editor automatically selects the exact text that triggered the alert, making it easy to replace or edit.
+</Tip>
+
+### Viewing External Documentation
+
+Many alerts include a **link icon** (🔗) that opens the relevant style guide rule in a new tab:
+
+- Provides detailed context for why the rule exists
+- Shows correct usage examples
+- Explains exceptions and edge cases
+
+<Note>
+  External links open in a new browser tab, so you won't lose your place in Verbalize.
+</Note>
+
+### Clearing Results
+
+To clear all current alerts:
+
+- Click the **"Clear"** button in the top-right of the Linting Alerts panel
+- Results are automatically cleared when you run linting again
+
+## Empty State: No Issues
+
+When no violations are detected, you'll see:
+
+```
+✓ Document Clean
+No style violations detected.
+```
+
+This means your content passes all active style rules for the selected guide.
+
+<Check>
+  A clean result indicates your documentation follows the style guide standards!
+</Check>
+
+## Common Alert Examples
+
+### Example 1: Time Format Error
+
+<AccordionGroup>
+  <Accordion title="Alert Details">
+    **Severity**: `ERROR`  
+    **Message**: "Use 'AM' or 'PM' (preceded by a space)."  
+    **Rule**: `Google.AMPM`  
+    **Line**: 15  
+    
+    **Problematic Text**: `10am`  
+    **Correct Format**: `10 AM`
+  </Accordion>
+  
+  <Accordion title="Why It Matters">
+    Consistent time formatting improves readability and prevents ambiguity in technical documentation. The Google style guide requires uppercase AM/PM with a preceding space.
+  </Accordion>
+  
+  <Accordion title="How to Fix">
+    1. Click the alert card
+    2. Editor selects "10am"
+    3. Replace with "10 AM"
+    4. Run linting again to verify
+  </Accordion>
+</AccordionGroup>
+
+### Example 2: First-Person Warning
+
+<AccordionGroup>
+  <Accordion title="Alert Details">
+    **Severity**: `WARNING`  
+    **Message**: "Avoid first-person pronouns such as 'my'."  
+    **Rule**: `Google.FirstPerson`  
+    **Line**: 23  
+    
+    **Problematic Text**: `my configuration file`  
+    **Better Alternative**: `your configuration file` or `the configuration file`
+  </Accordion>
+  
+  <Accordion title="Why It Matters">
+    Technical documentation should maintain an objective tone. First-person pronouns can create ambiguity about whose perspective is being represented.
+  </Accordion>
+  
+  <Accordion title="How to Fix">
+    Rephrase to use second-person ("your") or third-person ("the") perspective:
+    
+    - "Edit **my** config file" → "Edit **your** config file"
+    - "In **my** example" → "In **this** example"
+  </Accordion>
+</AccordionGroup>
+
+### Example 3: Hedging Language Suggestion
+
+<AccordionGroup>
+  <Accordion title="Alert Details">
+    **Severity**: `SUGGESTION`  
+    **Message**: "Consider removing 'very'"  
+    **Rule**: `Custom.HedgingLanguage`  
+    **Line**: 8  
+    
+    **Problematic Text**: `very important`  
+    **Alternative**: `critical` or `essential`
+  </Accordion>
+  
+  <Accordion title="Why It Matters">
+    Words like "very", "really", and "quite" weaken your writing. More specific adjectives improve clarity and impact.
+  </Accordion>
+  
+  <Accordion title="How to Fix">
+    Replace hedge words with stronger, more precise alternatives:
+    
+    - "very important" → "critical"
+    - "really fast" → "high-performance"
+    - "quite useful" → "valuable"
+  </Accordion>
+</AccordionGroup>
+
+## Prioritizing Fixes
+
+When facing multiple alerts, use this strategy:
+
+<Steps>
+  <Step title="Fix all ERRORS first">
+    These are mandatory violations that must be corrected. They typically involve:
+    - Incorrect terminology
+    - Formatting violations
+    - Critical style requirements
+  </Step>
+  
+  <Step title="Address WARNINGS next">
+    These issues significantly affect quality:
+    - Consistency problems
+    - Readability concerns
+    - Important style preferences
+  </Step>
+  
+  <Step title="Review SUGGESTIONS last">
+    Evaluate these based on context:
+    - Minor improvements
+    - Stylistic preferences
+    - Potential enhancements
+  </Step>
+</Steps>
+
+## Filtering and Sorting
+
+Currently, alerts are displayed in **document order** (by line number):
+
+- Issues earlier in your document appear first
+- Makes it easy to fix problems sequentially
+- Helps maintain document flow while editing
+
+<Info>
+  Future versions may include filtering by severity level and custom sorting options.
+</Info>
+
+## Understanding Rule Names
+
+Rule names follow a **namespace.rule** pattern:
+
+| Format | Example | Meaning |
+|--------|---------|----------|
+| `Google.*` | `Google.FirstPerson` | Rule from Google style guide |
+| `Microsoft.*` | `Microsoft.Headings` | Rule from Microsoft style guide |
+| `RedHat.*` | `RedHat.TermsSuggestions` | Rule from Red Hat style guide |
+| `Custom.*` | `Custom.HedgingLanguage` | Your uploaded custom rule |
+
+This helps you identify which style guide or custom ruleset triggered each alert.
+
+## Performance Notes
+
+- **Typical linting time**: Under 2 seconds for documents < 10,000 words
+- **Large documents**: May take 3-5 seconds for files approaching 1MB
+- **Multiple style guides**: Enabling more guides increases processing time by ~40%
+
+<Warning>
+  Documents exceeding 1MB cannot be linted and will return an error.
+</Warning>
+
+## Troubleshooting
+
+### No Results Appearing
+
+<AccordionGroup>
+  <Accordion title="Possible Causes">
+    - Editor is empty (no text to lint)
+    - Linting failed to complete (check browser console)
+    - API timeout (document too large)
+  </Accordion>
+  
+  <Accordion title="Solutions">
+    1. Ensure editor contains text
+    2. Check browser console for errors (F12)
+    3. Try linting a smaller section
+    4. Verify style guide is selected
+  </Accordion>
+</AccordionGroup>
+
+### Too Many Alerts
+
+<AccordionGroup>
+  <Accordion title="Management Strategies">
+    - Work on small sections at a time
+    - Focus on errors first, ignore suggestions initially
+    - Consider if a different style guide better matches your content
+    - Review custom rules for overly strict settings
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Style Guides" icon="book" href="/user-guide/style-guides">
+    Learn about the three built-in style guides and when to use each
+  </Card>
+  <Card title="Custom Rules" icon="wrench" href="/user-guide/custom-rules">
+    Create custom rules for project-specific requirements
+  </Card>
+</CardGroup>

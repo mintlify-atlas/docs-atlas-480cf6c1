@@ -1,0 +1,393 @@
+---
+title: Environment Variables
+description: Configure Verbalize with environment variables
+---
+
+## Overview
+
+Verbalize uses environment variables to configure runtime behavior, security limits, and Vale integration. While the application works with sensible defaults, you can customize these variables for your deployment environment.
+
+## Application Constants
+
+The following constants are defined in the linting API and control security and performance limits.
+
+### Security Limits
+
+These constants prevent abuse and ensure system stability:
+
+<ParamField path="MAX_TEXT_LENGTH" type="number" default="1048576">
+  Maximum allowed text input size in bytes (1MB).
+  
+  Defined in `app/api/lint/route.ts:12`:
+  ```typescript
+  const MAX_TEXT_LENGTH = 1024 * 1024; // 1MB
+  ```
+  
+  If exceeded, the API returns:
+  ```json
+  {
+    "error": "Text exceeds maximum allowed length of 1048576 characters",
+    "status": 400
+  }
+  ```
+</ParamField>
+
+<ParamField path="MAX_CUSTOM_RULES" type="number" default="10">
+  Maximum number of custom Vale rules per request.
+  
+  Defined in `app/api/lint/route.ts:13`:
+  ```typescript
+  const MAX_CUSTOM_RULES = 10;
+  ```
+  
+  Limits the number of user-provided custom linting rules to prevent resource exhaustion.
+</ParamField>
+
+<ParamField path="MAX_RULE_LENGTH" type="number" default="10240">
+  Maximum size of a single custom rule in bytes (10KB).
+  
+  Defined in `app/api/lint/route.ts:14`:
+  ```typescript
+  const MAX_RULE_LENGTH = 10 * 1024; // 10KB
+  ```
+  
+  If exceeded, the API returns:
+  ```json
+  {
+    "error": "Rule 'RuleName' exceeds maximum allowed length of 10240 characters",
+    "status": 400
+  }
+  ```
+</ParamField>
+
+### Allowed Styles
+
+<ParamField path="ALLOWED_STYLES" type="array" default='["Google", "Microsoft", "RedHat"]'>
+  Whitelist of permitted Vale style guides.
+  
+  Defined in `app/api/lint/route.ts:11`:
+  ```typescript
+  const ALLOWED_STYLES = ['Google', 'Microsoft', 'RedHat'];
+  ```
+  
+  This prevents configuration injection attacks by restricting which style guides can be used.
+  
+  If an invalid style is provided, the API returns:
+  ```json
+  {
+    "error": "Invalid style guide selected",
+    "status": 400
+  }
+  ```
+</ParamField>
+
+## Runtime Environment Variables
+
+These optional environment variables can be set in your deployment environment.
+
+### Vale Configuration
+
+<ParamField path="VALE_CONFIG_PATH" type="string" default="./.vale.ini">
+  Path to the Vale configuration file.
+  
+  **Usage**:
+  ```bash
+  VALE_CONFIG_PATH=/custom/path/.vale.ini
+  ```
+  
+  **Note**: Verbalize generates temporary Vale configurations at runtime, so this variable is typically not needed unless you're running Vale CLI commands separately.
+</ParamField>
+
+<ParamField path="VALE_STYLES_PATH" type="string" default="./styles">
+  Path to the Vale styles directory.
+  
+  **Usage**:
+  ```bash
+  VALE_STYLES_PATH=/custom/styles
+  ```
+  
+  The styles directory should contain:
+  - `Google/` - Google style guide rules
+  - `Microsoft/` - Microsoft style guide rules
+  - `RedHat/` - Red Hat style guide rules
+</ParamField>
+
+### Next.js Environment
+
+<ParamField path="NODE_ENV" type="string" default="development" required>
+  Node.js environment mode.
+  
+  **Options**:
+  - `development` - Development mode with hot reloading
+  - `production` - Production mode with optimizations
+  - `test` - Testing mode
+  
+  **Usage**:
+  ```bash
+  NODE_ENV=production npm start
+  ```
+</ParamField>
+
+<ParamField path="PORT" type="number" default="3000">
+  Port number for the Next.js server.
+  
+  **Usage**:
+  ```bash
+  PORT=8080 npm start
+  ```
+</ParamField>
+
+### Debugging
+
+<ParamField path="DEBUG" type="string" default="">
+  Enable verbose logging for troubleshooting.
+  
+  **Usage**:
+  ```bash
+  DEBUG=vale:* npm run dev
+  ```
+  
+  Enables detailed logs for Vale operations and API requests.
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_DEBUG" type="boolean" default="false">
+  Enable client-side debug mode.
+  
+  **Usage**:
+  ```bash
+  NEXT_PUBLIC_DEBUG=true npm run dev
+  ```
+  
+  Displays additional debugging information in the browser console.
+</ParamField>
+
+## Setting Environment Variables
+
+### Local Development
+
+Create a `.env.local` file in the project root:
+
+```bash
+# .env.local
+NODE_ENV=development
+PORT=3000
+DEBUG=vale:*
+NEXT_PUBLIC_DEBUG=true
+```
+
+Next.js automatically loads variables from `.env.local` during development.
+
+<Warning>
+  Never commit `.env.local` to version control. Add it to `.gitignore`:
+  ```
+  .env.local
+  .env*.local
+  ```
+</Warning>
+
+### Production (Netlify)
+
+1. Go to your site dashboard
+2. Navigate to **Site configuration > Environment variables**
+3. Add variables:
+   - **Key**: `NODE_ENV`
+   - **Value**: `production`
+4. Click **Save**
+5. Redeploy your site
+
+### Production (Vercel)
+
+1. Go to your project dashboard
+2. Navigate to **Settings > Environment Variables**
+3. Add variables for each environment (Production, Preview, Development)
+4. Redeploy
+
+Alternatively, use Vercel CLI:
+
+```bash
+vercel env add NODE_ENV production
+```
+
+### Production (Docker)
+
+Pass environment variables when running the container:
+
+```bash
+docker run -p 3000:3000 \
+  -e NODE_ENV=production \
+  -e PORT=3000 \
+  verbalize
+```
+
+Or use an environment file:
+
+```bash
+docker run -p 3000:3000 --env-file .env.production verbalize
+```
+
+## API Request Validation
+
+The linting API validates all requests against configured limits:
+
+<CodeGroup>
+
+```typescript route.ts
+if (text.length > MAX_TEXT_LENGTH) {
+  return NextResponse.json(
+    { error: `Text exceeds maximum allowed length of ${MAX_TEXT_LENGTH} characters` },
+    { status: 400 }
+  );
+}
+
+if (!ALLOWED_STYLES.includes(style)) {
+  return NextResponse.json(
+    { error: 'Invalid style guide selected' },
+    { status: 400 }
+  );
+}
+
+if (customRules && Array.isArray(customRules)) {
+  if (customRules.length > MAX_CUSTOM_RULES) {
+    return NextResponse.json(
+      { error: `Too many custom rules. Maximum is ${MAX_CUSTOM_RULES}` },
+      { status: 400 }
+    );
+  }
+
+  for (const rule of customRules) {
+    if (rule.content && rule.content.length > MAX_RULE_LENGTH) {
+      return NextResponse.json(
+        { error: `Rule "${rule.name}" exceeds maximum allowed length of ${MAX_RULE_LENGTH} characters` },
+        { status: 400 }
+      );
+    }
+  }
+}
+```
+
+</CodeGroup>
+
+From `app/api/lint/route.ts:25-43`.
+
+## Customizing Security Limits
+
+To modify security limits, edit the constants in `app/api/lint/route.ts`:
+
+```typescript
+// Increase max text size to 5MB
+const MAX_TEXT_LENGTH = 5 * 1024 * 1024;
+
+// Allow up to 20 custom rules
+const MAX_CUSTOM_RULES = 20;
+
+// Increase max rule size to 50KB
+const MAX_RULE_LENGTH = 50 * 1024;
+```
+
+<Warning>
+  Increasing limits may impact performance and increase serverless function execution time. Test thoroughly before deploying to production.
+</Warning>
+
+## Vale Binary Location
+
+The Vale binary location is determined at runtime:
+
+<CodeGroup>
+
+```typescript route.ts
+const valePath = path.join(
+  process.cwd(),
+  process.platform === 'win32' ? 'vale.exe' : 'vale'
+);
+
+// Ensure the binary is executable
+try {
+  await fs.chmod(valePath, 0o755);
+} catch (err) {
+  console.warn('Could not chmod vale binary:', err);
+}
+```
+
+</CodeGroup>
+
+From `app/api/lint/route.ts:109-117`.
+
+The API automatically:
+1. Detects the platform (Windows, Linux, macOS)
+2. Locates the Vale binary in the project root
+3. Sets executable permissions (755)
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Use environment-specific files">
+    Create separate files for each environment:
+    - `.env.local` - Local development
+    - `.env.production` - Production settings
+    - `.env.test` - Testing environment
+  </Accordion>
+
+  <Accordion title="Keep secrets secure">
+    Never expose sensitive values:
+    - Use secret management tools (Netlify Environment Variables, Vercel Secrets)
+    - Never commit `.env` files to version control
+    - Rotate secrets regularly
+  </Accordion>
+
+  <Accordion title="Document custom variables">
+    If you add new environment variables, document them:
+    - Add to this page
+    - Include in deployment instructions
+    - Provide sensible defaults
+  </Accordion>
+
+  <Accordion title="Test limits in staging">
+    Before changing security limits:
+    - Test with representative document sizes
+    - Monitor function execution times
+    - Verify error handling works correctly
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+### Variable not loading
+
+**Issue**: Environment variable not taking effect
+
+**Solution**:
+1. Verify variable name (Next.js public variables must start with `NEXT_PUBLIC_`)
+2. Restart development server after changing `.env.local`
+3. Clear Next.js cache: `rm -rf .next`
+4. Check variable is set correctly in deployment platform
+
+### Vale binary permissions
+
+**Issue**: `EACCES: permission denied, execFile 'vale'`
+
+**Solution**:
+```bash
+# Make Vale executable
+chmod 755 vale
+
+# Verify permissions
+ls -la vale
+# Should show: -rwxr-xr-x
+```
+
+### Function timeout
+
+**Issue**: Requests timing out with large documents
+
+**Solution**:
+1. Reduce `MAX_TEXT_LENGTH` to enforce smaller documents
+2. Increase function timeout in platform settings:
+   - Netlify: `netlify.toml` → `[functions] timeout = 30`
+   - Vercel: `vercel.json` → `functions.maxDuration`
+3. Optimize Vale configuration (reduce active styles)
+
+## Related Resources
+
+- [Vale Configuration](/configuration/vale-config)
+- [Deployment Guide](/configuration/deployment)
+- [Next.js Environment Variables](https://nextjs.org/docs/app/building-your-application/configuring/environment-variables)

@@ -1,0 +1,181 @@
+---
+title: 'Using the Editor'
+description: 'Learn how to use the Verbalize editor interface for documentation linting'
+icon: 'edit'
+---
+
+## Overview
+
+Verbalize provides a three-column workspace designed for efficient documentation writing and linting. The interface includes an editor, live preview, and results panel that work together to help you create high-quality technical content.
+
+## Interface Layout
+
+The Verbalize interface is divided into three main sections:
+
+<CardGroup cols={3}>
+  <Card title="Editor" icon="pen-to-square">
+    Write and edit your Markdown/MDX documentation
+  </Card>
+  <Card title="Preview" icon="eye">
+    See a live rendered preview of your content
+  </Card>
+  <Card title="Linting Alerts" icon="triangle-exclamation">
+    View style guide violations and suggestions
+  </Card>
+</CardGroup>
+
+## Using the Editor
+
+### Writing Content
+
+The editor panel is located on the left side of the interface and supports:
+
+- **Plain text** for simple documentation
+- **Markdown** syntax for formatted content
+- **MDX** files with advanced components
+- Documents up to **1MB** in size
+
+The character count is displayed in real-time at the top of the editor panel.
+
+<Info>
+  The editor uses monospace font for better code and technical content visibility.
+</Info>
+
+### Editor Controls
+
+Located at the top-right of the editor panel:
+
+| Icon | Action | Description |
+|------|--------|-------------|
+| Copy | Copy to clipboard | Copies all editor content to your clipboard |
+| Trash | Clear editor | Removes all content from the editor (requires confirmation) |
+
+### Uploading Documents
+
+You can upload existing documentation files:
+
+1. Open the **sidebar** (click the hamburger menu if hidden)
+2. Click **Upload MD/MDX** button under the "Document" section
+3. Select a `.md` or `.mdx` file from your computer
+4. The content will load into the editor automatically
+
+<Warning>
+  Uploading a new document will replace any existing content in the editor. Make sure to save your work before uploading.
+</Warning>
+
+## Live Preview
+
+The middle column displays a **rendered preview** of your Markdown content:
+
+- Updates automatically as you type
+- Supports full Markdown syntax (headings, lists, links, code blocks)
+- Styled with professional typography using prose styles
+- Synchronized scrolling with the editor
+
+### Synchronized Scrolling
+
+The preview panel automatically scrolls to match your position in the editor:
+
+- Scroll in the **editor** → preview follows
+- Scroll in the **preview** → editor follows
+- Helps maintain context when working with long documents
+
+<Tip>
+  The preview shows how your content will appear to readers, making it easier to spot formatting issues.
+</Tip>
+
+## Sidebar Settings
+
+The collapsible sidebar (left side) contains all configuration options:
+
+### Toggling the Sidebar
+
+- **Close**: Click the `X` button in the top-right of the sidebar
+- **Open**: Click the hamburger menu icon in the top header
+
+### Base Style Guide Selection
+
+Choose your primary style guide from the dropdown:
+
+<Tabs>
+  <Tab title="Google Developer">
+    Follows the [Google Developer Documentation Style Guide](https://developers.google.com/style)
+    
+    **Best for**: API documentation, developer guides, technical tutorials
+  </Tab>
+  <Tab title="Microsoft Writing">
+    Follows the [Microsoft Writing Style Guide](https://learn.microsoft.com/style-guide)
+    
+    **Best for**: Software documentation, user manuals, product guides
+  </Tab>
+  <Tab title="Red Hat Style">
+    Follows the [Red Hat Documentation Style Guide](https://redhat-documentation.github.io/)
+    
+    **Best for**: Open-source projects, enterprise software, technical references
+  </Tab>
+</Tabs>
+
+### Running Linting
+
+1. Write or paste content in the editor
+2. Select your desired **style guide** in the sidebar
+3. Optionally upload **custom rules** (see [Custom Rules](/user-guide/custom-rules))
+4. Click the **Run Linting** button at the bottom of the sidebar
+
+The button shows:
+- **"Run Linting"** when idle
+- **"Analyzing..."** with a spinning icon during processing
+- Becomes disabled while linting is in progress
+
+<Note>
+  Linting typically completes in under 2 seconds for documents with fewer than 10,000 words.
+</Note>
+
+## Keyboard Navigation
+
+Verbalize supports keyboard-friendly workflows:
+
+- **Tab**: Navigate between interactive elements
+- **Ctrl/Cmd + A**: Select all text in the editor
+- **Ctrl/Cmd + C**: Copy selected text
+- **Ctrl/Cmd + V**: Paste text into the editor
+- **Escape**: Close modals and confirmations
+
+## Theme Switching
+
+Toggle between light and dark modes using the theme button in the top-right header (sun/moon icon):
+
+- **Light mode**: Optimal for bright environments
+- **Dark mode**: Reduces eye strain in low-light conditions
+- Setting persists across sessions
+
+## Best Practices
+
+<Steps>
+  <Step title="Write first, lint later">
+    Focus on getting your content written before running style checks. This helps maintain your creative flow.
+  </Step>
+  
+  <Step title="Use incremental linting">
+    For large documents, lint sections as you complete them to catch issues early.
+  </Step>
+  
+  <Step title="Keep the preview visible">
+    Use the three-column layout to catch both style issues and formatting problems simultaneously.
+  </Step>
+  
+  <Step title="Save your work externally">
+    Copy your content regularly or work in a local text editor with auto-save enabled.
+  </Step>
+</Steps>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Understanding Results" icon="chart-line" href="/user-guide/understanding-results">
+    Learn how to interpret linting alerts and fix violations
+  </Card>
+  <Card title="Custom Rules" icon="wrench" href="/user-guide/custom-rules">
+    Create your own style rules for project-specific standards
+  </Card>
+</CardGroup>

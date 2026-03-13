@@ -1,0 +1,384 @@
+---
+title: 'Style Guides'
+description: 'Overview of available style guides: Google, Microsoft, and RedHat'
+icon: 'book-open'
+---
+
+## Overview
+
+Verbalize includes three professional style guides for technical documentation. Each guide represents industry-standard best practices from major technology companies and open-source organizations.
+
+## Available Style Guides
+
+<CardGroup cols={3}>
+  <Card title="Google" icon="google" href="#google-developer">
+    Developer documentation focused on API and technical content
+  </Card>
+  <Card title="Microsoft" icon="microsoft" href="#microsoft-writing">
+    Software documentation for products and user-facing content
+  </Card>
+  <Card title="RedHat" icon="redhat" href="#red-hat-style">
+    Enterprise and open-source technical documentation
+  </Card>
+</CardGroup>
+
+## Selecting a Style Guide
+
+Choose your style guide from the **sidebar** under "Base Style Guide":
+
+1. Open the sidebar (if closed)
+2. Locate the **Base Style Guide** dropdown
+3. Select: `Google`, `Microsoft`, or `RedHat`
+4. Run linting to apply the selected rules
+
+The selected guide determines which ruleset Vale uses to check your content.
+
+<Info>
+  You can change style guides at any time and re-run linting to see how your content performs against different standards.
+</Info>
+
+---
+
+## Google Developer
+
+### Overview
+
+The [Google Developer Documentation Style Guide](https://developers.google.com/style) provides comprehensive guidelines for technical documentation, with emphasis on:
+
+- API documentation clarity
+- Developer-focused content
+- Technical accuracy and precision
+- Accessible language for international audiences
+
+### Key Characteristics
+
+<AccordionGroup>
+  <Accordion title="Tone & Voice">
+    - **Conversational but professional**
+    - Avoids first-person pronouns (`I`, `my`, `me`)
+    - Uses second-person (`you`) to address readers
+    - Maintains objectivity in technical explanations
+  </Accordion>
+  
+  <Accordion title="Formatting Standards">
+    - Time format: `10 AM` (uppercase with space)
+    - Date format: `July 12, 2026` (Month Day, Year)
+    - Avoids Latin abbreviations (`e.g.`, `i.e.`)
+    - Uses em dashes (—) with no surrounding spaces
+    - Exclamation marks discouraged
+  </Accordion>
+  
+  <Accordion title="Language Guidelines">
+    - Spells out acronyms on first use
+    - Avoids contractions in formal contexts
+    - Gender-neutral language required
+    - Consistent heading capitalization (sentence case)
+    - No optional plurals (e.g., "file(s)")
+  </Accordion>
+</AccordionGroup>
+
+### Example Rules
+
+The Google style guide includes rules like:
+
+| Rule | Purpose | Example |
+|------|---------|----------|
+| `Google.AMPM` | Time format consistency | ❌ `10am` → ✅ `10 AM` |
+| `Google.FirstPerson` | Avoid subjective language | ❌ `my code` → ✅ `your code` |
+| `Google.Acronyms` | Ensure acronyms are defined | ❌ `Use the API` → ✅ `Use the Application Programming Interface (API)` |
+| `Google.Contractions` | Maintain formal tone | ❌ `don't` → ✅ `do not` |
+| `Google.Exclamation` | Avoid overenthusiasm | ❌ `Great!` → ✅ `This works well.` |
+
+### Best For
+
+<CardGroup cols={2}>
+  <Card icon="code">
+    **API Documentation**
+    
+    REST APIs, SDKs, and developer references
+  </Card>
+  <Card icon="book-open">
+    **Technical Tutorials**
+    
+    Developer guides and how-to content
+  </Card>
+  <Card icon="terminal">
+    **CLI Documentation**
+    
+    Command-line tools and utilities
+  </Card>
+  <Card icon="puzzle-piece">
+    **Integration Guides**
+    
+    Third-party service integration docs
+  </Card>
+</CardGroup>
+
+### Official Documentation
+
+- **Style Guide**: https://developers.google.com/style
+- **Word List**: https://developers.google.com/style/word-list
+- **Vale Package**: https://github.com/errata-ai/Google
+
+---
+
+## Microsoft Writing
+
+### Overview
+
+The [Microsoft Writing Style Guide](https://learn.microsoft.com/style-guide) focuses on making technical content accessible to diverse audiences while maintaining professional standards.
+
+### Key Characteristics
+
+<AccordionGroup>
+  <Accordion title="Tone & Voice">
+    - **Warm and approachable**
+    - Emphasizes customer perspective
+    - Allows selective use of contractions
+    - Encourages clarity over formality
+  </Accordion>
+  
+  <Accordion title="Formatting Standards">
+    - Uses serial commas (Oxford commas)
+    - Prefers active voice over passive
+    - Consistent capitalization in headings
+    - Clear bullet point structure
+  </Accordion>
+  
+  <Accordion title="Language Guidelines">
+    - Inclusive language required
+    - Avoids jargon when possible
+    - Uses simple words over complex ones
+    - Respects cultural and regional differences
+  </Accordion>
+</AccordionGroup>
+
+### Example Rules
+
+Microsoft style emphasizes:
+
+| Rule | Purpose | Example |
+|------|---------|----------|
+| `Microsoft.Headings` | Consistent heading style | ✅ Sentence case for all headings |
+| `Microsoft.Contractions` | Reader-friendly tone | ✅ Selective use of "don't", "can't" |
+| `Microsoft.Passive` | Prefer active voice | ❌ "is created by" → ✅ "creates" |
+| `Microsoft.Gender` | Inclusive language | ❌ "he/she" → ✅ "they" |
+| `Microsoft.We` | Brand voice consistency | ❌ Inconsistent use of "we" |
+
+### Best For
+
+<CardGroup cols={2}>
+  <Card icon="window-maximize">
+    **Software Documentation**
+    
+    Product features and user interfaces
+  </Card>
+  <Card icon="book">
+    **User Manuals**
+    
+    End-user guides and help content
+  </Card>
+  <Card icon="graduation-cap">
+    **Training Materials**
+    
+    Courses and learning resources
+  </Card>
+  <Card icon="comments">
+    **Support Content**
+    
+    Knowledge base articles and FAQs
+  </Card>
+</CardGroup>
+
+### Official Documentation
+
+- **Style Guide**: https://learn.microsoft.com/style-guide
+- **A-Z Word List**: https://learn.microsoft.com/style-guide/a-z-word-list-term-collections/term-collections/
+- **Vale Package**: https://github.com/errata-ai/Microsoft
+
+---
+
+## Red Hat Style
+
+### Overview
+
+The [Red Hat Documentation Style Guide](https://redhat-documentation.github.io/) serves enterprise software and open-source project documentation needs.
+
+### Key Characteristics
+
+<AccordionGroup>
+  <Accordion title="Tone & Voice">
+    - **Professional and authoritative**
+    - Technical precision emphasized
+    - Enterprise-appropriate language
+    - Open-source community awareness
+  </Accordion>
+  
+  <Accordion title="Formatting Standards">
+    - Strict term consistency
+    - Specific product name conventions
+    - Command syntax formatting rules
+    - File path notation standards
+  </Accordion>
+  
+  <Accordion title="Language Guidelines">
+    - Precise technical terminology
+    - Consistent brand names
+    - Proper capitalization of technical terms
+    - Standardized error message formats
+  </Accordion>
+</AccordionGroup>
+
+### Example Rules
+
+Red Hat style includes:
+
+| Rule | Purpose | Example |
+|------|---------|----------|
+| `RedHat.TermsSuggestions` | Consistent terminology | Standardized product names |
+| `RedHat.Spelling` | Technical term accuracy | Proper capitalization of tech terms |
+| `RedHat.Symbols` | Symbol usage rules | Correct use of ® and ™ |
+| `RedHat.SentenceLength` | Readability control | Warns on overly long sentences |
+| `RedHat.PassiveVoice` | Prefer active constructs | Encourages active voice |
+
+### Best For
+
+<CardGroup cols={2}>
+  <Card icon="server">
+    **Enterprise Software**
+    
+    Server products and infrastructure
+  </Card>
+  <Card icon="code-branch">
+    **Open Source Projects**
+    
+    Community-driven documentation
+  </Card>
+  <Card icon="shield-halved">
+    **Security Documentation**
+    
+    Security guides and compliance docs
+  </Card>
+  <Card icon="wrench">
+    **System Administration**
+    
+    Admin guides and configuration docs
+  </Card>
+</CardGroup>
+
+### Official Documentation
+
+- **Style Guide**: https://redhat-documentation.github.io/
+- **Vale Package**: https://github.com/errata-ai/RedHat
+- **Supplementary Guides**: https://redhat-documentation.github.io/supplementary-style-guide/
+
+---
+
+## Comparison Matrix
+
+<Tabs>
+  <Tab title="At a Glance">
+    | Feature | Google | Microsoft | RedHat |
+    |---------|--------|-----------|--------|
+    | **Primary Audience** | Developers | End users | Enterprise admins |
+    | **Tone** | Professional | Friendly | Authoritative |
+    | **Contractions** | Avoid | Selective | Rare |
+    | **First Person** | Avoid | Limited | Avoid |
+    | **Technical Depth** | High | Medium | Very High |
+    | **Accessibility Focus** | High | Very High | High |
+  </Tab>
+  
+  <Tab title="Use Cases">
+    ### Choose Google if:
+    - Writing API documentation
+    - Creating developer tutorials
+    - Documenting SDKs or libraries
+    - Targeting technical audiences
+    
+    ### Choose Microsoft if:
+    - Documenting user interfaces
+    - Writing help content
+    - Creating training materials
+    - Reaching general audiences
+    
+    ### Choose RedHat if:
+    - Documenting enterprise software
+    - Writing for system administrators
+    - Creating compliance documentation
+    - Working on open-source projects
+  </Tab>
+  
+  <Tab title="Rule Counts">
+    Each style guide includes dozens of specific rules:
+    
+    - **Google**: ~30+ rules covering formatting, language, and structure
+    - **Microsoft**: ~40+ rules emphasizing accessibility and readability
+    - **RedHat**: ~25+ rules focused on consistency and terminology
+    
+    <Info>
+      Rule counts are approximate. Each style guide receives regular updates from the community.
+    </Info>
+  </Tab>
+</Tabs>
+
+## Combining with Custom Rules
+
+You can **layer custom rules** on top of any base style guide:
+
+1. Select your base guide (`Google`, `Microsoft`, or `RedHat`)
+2. Upload custom rules in the sidebar (see [Custom Rules](/user-guide/custom-rules))
+3. Run linting to apply **both** base and custom rules
+
+This allows you to:
+- Extend style guides with project-specific terms
+- Add organization-specific rules
+- Enforce brand guidelines alongside industry standards
+
+<Tip>
+  Custom rules augment the base style guide rather than replacing it. Both sets of rules are checked during linting.
+</Tip>
+
+## Style Guide Files
+
+All style guides are stored in the `styles/` directory:
+
+```
+styles/
+├── Google/
+│   ├── AMPM.yml
+│   ├── Acronyms.yml
+│   ├── Contractions.yml
+│   ├── FirstPerson.yml
+│   └── ... (30+ rule files)
+├── Microsoft/
+│   ├── Headings.yml
+│   ├── Passive.yml
+│   └── ... (40+ rule files)
+└── RedHat/
+    ├── TermsSuggestions.yml
+    ├── Spelling.yml
+    └── ... (25+ rule files)
+```
+
+Each `.yml` file defines a specific rule that Vale enforces during linting.
+
+## Updating Style Guides
+
+Style guides are maintained by the Vale community:
+
+- **Google**: [errata-ai/Google](https://github.com/errata-ai/Google)
+- **Microsoft**: [errata-ai/Microsoft](https://github.com/errata-ai/Microsoft)
+- **RedHat**: [errata-ai/RedHat](https://github.com/errata-ai/RedHat)
+
+Verbalize includes recent versions of these guides. Updates are incorporated periodically to reflect the latest style standards.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Understanding Results" icon="chart-line" href="/user-guide/understanding-results">
+    Learn how to interpret alerts from your chosen style guide
+  </Card>
+  <Card title="Custom Rules" icon="wrench" href="/user-guide/custom-rules">
+    Extend style guides with your own project-specific rules
+  </Card>
+</CardGroup>

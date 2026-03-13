@@ -1,0 +1,165 @@
+---
+title: Vale Configuration
+description: Configure Vale linting rules and style guides for Verbalize
+---
+
+## Overview
+
+Verbalize uses Vale as its core linting engine. The Vale configuration file (`.vale.ini`) controls which style guides are applied, the minimum alert level, and where Vale looks for style rules.
+
+## Configuration File
+
+The `.vale.ini` file is located at the root of the project:
+
+```ini
+StylesPath = styles
+MinAlertLevel = suggestion
+
+Packages = Google, Microsoft, RedHat
+
+[*.md]
+BasedOnStyles = Vale, Google, Microsoft, RedHat
+```
+
+## Configuration Options
+
+### StylesPath
+
+Specifies the directory where Vale style guides are stored.
+
+```ini
+StylesPath = styles
+```
+
+The `styles/` directory contains:
+- `Google/` - Google Developer Documentation Style Guide
+- `Microsoft/` - Microsoft Writing Style Guide
+- `RedHat/` - Red Hat Documentation Style Guide
+
+### MinAlertLevel
+
+Sets the minimum severity level for alerts to display:
+
+- `suggestion` - Shows all feedback (default)
+- `warning` - Shows warnings and errors only
+- `error` - Shows errors only
+
+```ini
+MinAlertLevel = suggestion
+```
+
+### Packages
+
+Defines which Vale style packages to use:
+
+```ini
+Packages = Google, Microsoft, RedHat
+```
+
+### File Type Rules
+
+The `[*.md]` section applies rules to Markdown files:
+
+```ini
+[*.md]
+BasedOnStyles = Vale, Google, Microsoft, RedHat
+```
+
+This configuration applies all three major style guides to Markdown content.
+
+## Allowed Style Guides
+
+Verbalize enforces a whitelist of allowed styles for security:
+
+<CodeGroup>
+
+```typescript route.ts
+const ALLOWED_STYLES = ['Google', 'Microsoft', 'RedHat'];
+```
+
+</CodeGroup>
+
+These styles are validated in `app/api/lint/route.ts:11`.
+
+## Custom Rules
+
+Users can add custom linting rules through the API. Custom rules are:
+
+- Limited to 10 rules per request
+- Maximum 10KB per rule
+- Stored in a temporary `Custom` style directory during linting
+
+### Custom Rule Example
+
+```yaml
+extends: substitution
+message: Consider using '%s' instead of '%s'
+level: warning
+ignorecase: true
+swap:
+  utilize: use
+  leverage: use
+```
+
+## Dynamic Configuration
+
+When processing lint requests, Verbalize generates a temporary Vale configuration:
+
+<CodeGroup>
+
+```typescript route.ts
+const valeIni = `
+StylesPath = ${tempStylesDir}
+MinAlertLevel = suggestion
+[*.md]
+BasedOnStyles = ${basedOnStyles}
+`;
+const iniFile = path.join(tmpDir, '.vale.ini');
+await fs.writeFile(iniFile, valeIni);
+```
+
+</CodeGroup>
+
+From `app/api/lint/route.ts:100-107`.
+
+## Style Guide Updates
+
+To update Vale style guides:
+
+```bash
+# Sync Vale packages
+vale sync
+
+# Update specific style
+vale sync Google
+```
+
+Refer to the [Vale documentation](https://vale.sh/docs/) for more details on configuration options.
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Keep styles updated">
+    Regularly sync Vale packages to get the latest style guide rules:
+    ```bash
+    vale sync
+    ```
+  </Accordion>
+
+  <Accordion title="Start with suggestions">
+    Use `MinAlertLevel = suggestion` to catch all potential improvements. Adjust to `warning` or `error` for stricter enforcement.
+  </Accordion>
+
+  <Accordion title="Test custom rules">
+    Validate custom rules with Vale CLI before adding them to your workflow:
+    ```bash
+    vale --config=.vale.ini test.md
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Related Resources
+
+- [Environment Variables](/configuration/environment-variables)
+- [Deployment Configuration](/configuration/deployment)
+- [Vale Official Documentation](https://vale.sh/docs/)

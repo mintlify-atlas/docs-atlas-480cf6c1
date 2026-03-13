@@ -1,0 +1,803 @@
+---
+title: Features
+description: Explore Verbalize's complete feature set—from real-time linting to custom rules and dark mode
+---
+
+# Features Overview
+
+Verbalize combines powerful linting capabilities with a thoughtfully designed interface to create a seamless documentation workflow. This page explores every feature in detail.
+
+## Real-Time Markdown Editing
+
+### Live Editor
+
+The editor panel provides a distraction-free writing environment with essential utilities:
+
+<CardGroup cols={2}>
+  <Card title="Character Counter" icon="calculator">
+    Track document length in real-time. The counter appears in the editor header and updates as you type.
+  </Card>
+  <Card title="Copy to Clipboard" icon="copy">
+    One-click button to copy all editor content. Shows a green checkmark on success for 2 seconds.
+  </Card>
+  <Card title="Clear Editor" icon="trash">
+    Remove all content with confirmation dialog. Useful for starting fresh with a new document.
+  </Card>
+  <Card title="Monospace Font" icon="terminal">
+    Uses a monospace font for precise character alignment and easier code block editing.
+  </Card>
+</CardGroup>
+
+### Full Markdown Support
+
+Write using standard Markdown syntax:
+
+```markdown
+# Headings (H1 through H6)
+
+**Bold text** and *italic text*
+
+- Unordered lists
+- With multiple items
+
+1. Ordered lists
+2. Numbered automatically
+
+[Links](https://example.com)
+
+![Images](https://example.com/image.png)
+
+`Inline code` and:
+
+```javascript
+// Fenced code blocks
+const example = "with syntax highlighting";
+```
+
+> Blockquotes for callouts
+```
+
+The editor accepts MDX syntax as well, though the preview renders standard Markdown only.
+
+## Live Preview
+
+### Real-Time Rendering
+
+The preview panel uses `react-markdown` to render your Markdown instantly as you type. The rendering is:
+
+- **Secure**: No raw HTML injection (unless explicitly enabled via plugins)
+- **Styled**: Uses Tailwind's typography plugin for beautiful defaults
+- **Dark mode aware**: Automatically adjusts colors based on theme
+
+### Synchronized Scrolling
+
+Both editor and preview panels synchronize scroll positions:
+
+<Info>
+  Scroll in either panel, and the other follows proportionally. This keeps your current editing position visible in both raw and rendered views.
+</Info>
+
+Implementation detail from `app/page.tsx:130-138`:
+
+```typescript
+const handleScroll = (e: React.UIEvent<HTMLElement>) => {
+  const source = e.currentTarget;
+  const target = source === editorRef.current ? previewRef.current : editorRef.current;
+
+  if (target) {
+    const percentage = source.scrollTop / (source.scrollHeight - source.clientHeight);
+    target.scrollTop = percentage * (target.scrollHeight - target.clientHeight);
+  }
+};
+```
+
+### Typography Styles
+
+The preview applies professional typography:
+
+- **Headings**: Bold, tight tracking, hierarchical sizing
+- **Links**: Blue with hover effects
+- **Code blocks**: Rounded corners, syntax highlighting
+- **Images**: Rounded corners (prose-img:rounded-xl)
+- **Prose**: Optimized line height and spacing
+
+## Style Guide Selection
+
+### Three Professional Guides
+
+Choose from industry-standard style guides:
+
+#### Google Developer Documentation Style Guide
+
+Optimized for developer-facing content:
+
+- Clear, concise language
+- Active voice preference
+- Consistent terminology
+- Accessibility-first approach
+- Extensive word list checks
+
+**Best for**: API documentation, tutorials, developer guides
+
+**Example rules**:
+- Avoid phrases like "simply," "just," "easy"
+- Use second person ("you") instead of "we" or "one"
+- Prefer "to" over "in order to"
+- Use em dashes (—) with no spaces
+
+#### Microsoft Writing Style Guide
+
+Focuses on customer-first, conversational content:
+
+- Conversational tone
+- Simple, everyday words
+- Bias-free communication
+- Consistent voice across products
+
+**Best for**: User documentation, help content, product guides
+
+**Example rules**:
+- Avoid "please" in instructions
+- Don't use "may" or "might" for permission
+- Prefer "can" over "have the ability to"
+- Use sentence case for headings
+
+#### Red Hat Documentation Style Guide
+
+Open source documentation standards:
+
+- Precision and clarity
+- Consistent terminology across docs
+- Clear procedures and instructions
+- Community-friendly tone
+
+**Best for**: Open source projects, technical references, Linux documentation
+
+**Example rules**:
+- Use "you" sparingly (more objective tone)
+- Prefer specific action verbs
+- Consistent product name capitalization
+- Proper use of technical terms
+
+### Switching Style Guides
+
+<Steps>
+  <Step title="Select New Guide">
+    Open the Settings sidebar and choose a different option from the **Base Style Guide** dropdown.
+  </Step>
+  <Step title="Re-run Linting">
+    Click **"Run Linting"** to validate your document against the new guide's rules.
+  </Step>
+  <Step title="Compare Results">
+    Different guides have different rules. A document clean under one guide may have violations in another.
+  </Step>
+</Steps>
+
+<Note>
+  Style guide selection happens per-lint, not per-session. You can switch guides as often as you want without reloading the page.
+</Note>
+
+## Linting Engine
+
+### Vale Integration
+
+Verbalize uses [Vale](https://vale.sh/), the leading open-source prose linter:
+
+- **Extensible**: Supports custom rules and style packages
+- **Fast**: Processes typical documents in under 2 seconds
+- **Accurate**: Line and column-level precision
+- **Flexible**: Configurable severity levels and rule toggles
+
+### How Linting Works
+
+When you click "Run Linting," here's what happens server-side (from `app/api/lint/route.ts:45-150`):
+
+<Steps>
+  <Step title="Text Validation">
+    ```typescript
+    // Validate text length (max 1MB)
+    if (text.length > MAX_TEXT_LENGTH) {
+      return NextResponse.json({ error: 'Text exceeds maximum' }, { status: 400 });
+    }
+    
+    // Validate style guide selection
+    if (!ALLOWED_STYLES.includes(style)) {
+      return NextResponse.json({ error: 'Invalid style guide' }, { status: 400 });
+    }
+    ```
+  </Step>
+
+  <Step title="Temporary File Creation">
+    ```typescript
+    // Create temp directory and file
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'vale-'));
+    const tmpFile = path.join(tmpDir, 'doc.md');
+    await fs.writeFile(tmpFile, text);
+    ```
+    
+    Vale requires file-based input, so text is written to a temporary `.md` file.
+  </Step>
+
+  <Step title="Style Configuration">
+    ```typescript
+    // Create temporary styles directory
+    const tempStylesDir = path.join(tmpDir, 'styles');
+    
+    // Symlink built-in styles (Google, Microsoft, RedHat)
+    for (const styleFolder of existingStyles) {
+      await fs.symlink(fullPath, path.join(tempStylesDir, styleFolder), 'dir');
+    }
+    
+    // Add custom rules if provided
+    if (customRules.length > 0) {
+      const customStyleDir = path.join(tempStylesDir, 'Custom');
+      // Write each custom rule .yml file
+    }
+    ```
+  </Step>
+
+  <Step title="Vale Execution">
+    ```typescript
+    // Generate dynamic .vale.ini
+    const valeIni = `
+    StylesPath = ${tempStylesDir}
+    MinAlertLevel = suggestion
+    [*.md]
+    BasedOnStyles = ${style}, Custom
+    `;
+    
+    // Execute Vale binary
+    const { stdout } = await execFileAsync(valePath, [
+      `--config=${iniFile}`,
+      '--output=JSON',
+      tmpFile
+    ]);
+    ```
+  </Step>
+
+  <Step title="Result Parsing">
+    ```typescript
+    // Parse JSON output
+    const results = JSON.parse(stdout);
+    
+    // Return alerts for the temp file
+    return NextResponse.json(results[tmpFile] || []);
+    ```
+  </Step>
+
+  <Step title="Cleanup">
+    ```typescript
+    // Always clean up temp files
+    finally {
+      await fs.rm(tmpDir, { recursive: true, force: true });
+    }
+    ```
+    
+    All temporary files are removed immediately after linting completes.
+  </Step>
+</Steps>
+
+### Alert Structure
+
+Each Vale alert contains detailed information:
+
+```typescript
+interface ValeAlert {
+  Action: {
+    Name: string;           // Suggested action (e.g., "replace")
+    Params: string[] | null; // Action parameters
+  };
+  Span: [number, number];   // Character positions [start, end]
+  Check: string;            // Rule name (e.g., "Google.WordList")
+  Description: string;      // Detailed explanation
+  Link: string;             // External documentation URL
+  Message: string;          // Short, actionable message
+  Severity: string;         // "error" | "warning" | "suggestion"
+  Match: string;            // The matched text
+  Line: number;             // Line number (1-indexed)
+}
+```
+
+### Severity Levels
+
+Vale categorizes issues into three levels:
+
+- **Error** (red badge): Critical issues that violate fundamental style rules
+- **Warning** (yellow badge): Important issues that should be addressed
+- **Suggestion** (blue badge): Optional improvements for better clarity or consistency
+
+<Info>
+  Verbalize sets `MinAlertLevel = suggestion` to show all three severity levels. You can modify this in the API route if you only want errors and warnings.
+</Info>
+
+## Custom Rules
+
+### Uploading Custom Rules
+
+Extend Verbalize with organization-specific Vale rules:
+
+<Steps>
+  <Step title="Create Vale Rule Files">
+    Write `.yml` files following [Vale's rule syntax](https://vale.sh/docs/topics/styles/):
+
+    ```yaml
+    # company-terms.yml
+    extends: substitution
+    message: "Use '%s' instead of '%s'"
+    level: error
+    ignorecase: false
+    swap:
+      CompanyName: Acme Corp
+      product-x: Acme Platform
+    ```
+  </Step>
+
+  <Step title="Upload to Verbalize">
+    1. Click the dashed upload box in **Custom Rules** section
+    2. Select one or multiple `.yml` files (max 10 files)
+    3. Each file appears in the custom rules list
+  </Step>
+
+  <Step title="Run Combined Linting">
+    Click **"Run Linting"** to apply both base style guide AND custom rules together.
+
+    The API dynamically creates a "Custom" style package and includes it in the Vale configuration.
+  </Step>
+</Steps>
+
+### Custom Rule Limits
+
+For security and performance:
+
+- **Maximum rules**: 10 per session
+- **Maximum rule size**: 10KB per file
+- **File name sanitization**: Non-alphanumeric characters replaced with underscores
+- **Path traversal prevention**: Only base filenames allowed
+
+### Example Custom Rules
+
+Click the "Example" link in the Custom Rules section to download a sample rule file. Here are more examples:
+
+<CodeGroup>
+```yaml company-terms.yml
+extends: substitution
+message: "Use the official term '%s'"
+level: warning
+ignorecase: true
+swap:
+  saas: SaaS
+  api key: API key
+  end point: endpoint
+  front-end: frontend
+  back-end: backend
+```
+
+```yaml prohibited-words.yml
+extends: existence
+message: "Avoid using '%s' in technical documentation"
+level: suggestion
+ignorecase: true
+tokens:
+  - obviously
+  - basically
+  - simply
+  - just
+  - clearly
+  - easy
+  - trivial
+```
+
+```yaml acronyms.yml
+extends: conditional
+message: "Define '%s' on first use"
+level: warning
+ignorecase: false
+first: '\b([A-Z]{2,})\b'
+second: '\b[A-Z][a-z]+ \([A-Z]{2,}\)'
+```
+</CodeGroup>
+
+### Removing Custom Rules
+
+Click the trash icon next to any custom rule name to remove it. The file is discarded from the session immediately.
+
+## Document Management
+
+### Uploading Files
+
+Load existing Markdown files into the editor:
+
+1. Click **"Upload MD/MDX"** button (blue with FileText icon)
+2. Select a `.md` or `.mdx` file from your computer
+3. Content replaces current editor text (no confirmation)
+4. File input is reset, allowing multiple uploads
+
+<Note>
+  File upload uses the browser's FileReader API—files are read entirely in memory before loading into the editor. Very large files (>5MB) may cause browser performance issues.
+</Note>
+
+### Downloading Results
+
+Currently, Verbalize focuses on linting feedback rather than document export. To save your edited content:
+
+1. Click the **Copy** button (top-right of editor header)
+2. Paste into your preferred text editor
+3. Save as `.md` or `.mdx`
+
+Alternatively, manually copy-paste from the editor.
+
+## Interactive Alerts
+
+### Clickable Navigation
+
+Every linting alert card is interactive:
+
+<Info>
+  Click any alert card to jump directly to the issue location in the editor. The problematic text is automatically selected and scrolled into view.
+</Info>
+
+### How Click-to-Navigate Works
+
+From `app/page.tsx:140-196`, the alert click handler:
+
+1. **Calculates offset**: Determines character position based on line number and span
+2. **Creates shadow textarea**: Measures rendered height accounting for text wrapping
+3. **Scrolls editor**: Centers the selection in the viewport
+4. **Highlights text**: Uses `setSelectionRange()` to select the problematic text
+
+```typescript
+const handleAlertClick = (alert: ValeAlert, e: React.MouseEvent) => {
+  // Calculate character offset
+  const lines = textarea.value.split('\n');
+  let offset = 0;
+  for (let i = 0; i < alert.Line - 1; i++) {
+    offset += lines[i].length + 1;
+  }
+  
+  const start = offset + alert.Span[0] - 1;
+  const end = offset + alert.Span[1];
+  
+  // Measure position and scroll
+  // ...
+  
+  // Select the text
+  textarea.setSelectionRange(start, end);
+};
+```
+
+The selected text is highlighted with a yellow background (defined in global styles).
+
+### External Documentation Links
+
+When available, alerts include external link icons:
+
+- **Click the link icon** (top-right of alert card) to open the style guide documentation in a new tab
+- Links point to official sources like developers.google.com/style or learn.microsoft.com/style-guide
+- Provides context for why a rule exists and how to fix violations
+
+### Clearing Alerts
+
+Click the **"Clear"** button in the Linting Alerts header to dismiss all current alerts. This doesn't affect your document—it just clears the display. Re-run linting to regenerate alerts.
+
+## User Interface
+
+### Dark Mode
+
+Verbalize includes full dark mode support:
+
+- **Auto-detection**: Respects system theme preference on first load
+- **Manual toggle**: Click sun/moon icon in top-right header
+- **Persistent**: Theme preference saved via `next-themes`
+- **Smooth transitions**: All colors transition smoothly when switching
+
+<CardGroup cols={2}>
+  <Card title="Light Mode" icon="sun">
+    Clean whites and grays with blue accents. Optimized for bright environments.
+  </Card>
+  <Card title="Dark Mode" icon="moon">
+    Deep grays and blacks with muted accents. Reduces eye strain in low light.
+  </Card>
+</CardGroup>
+
+### Collapsible Sidebar
+
+Maximize writing space:
+
+- **Close sidebar**: Click the X icon in sidebar header
+- **Reopen sidebar**: Click the sidebar icon in main header (top-left)
+- **Smooth animation**: 300ms ease-in-out transition
+- **State preserved**: Settings remain intact when sidebar is hidden
+
+### Responsive Design
+
+While optimized for desktop, Verbalize adapts to smaller screens:
+
+- **Mobile**: Three-column layout stacks vertically
+- **Tablet**: Sidebar becomes full-width overlay
+- **Desktop**: Full three-column layout with sidebar
+
+<Note>
+  For the best experience, use Verbalize on a screen at least 1280px wide. The three-column layout requires horizontal space to be effective.
+</Note>
+
+### Custom Scrollbars
+
+Thin, styled scrollbars throughout the interface (from global styles):
+
+```css
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #e2e8f0; /* Light mode */
+  border-radius: 10px;
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #334155; /* Dark mode */
+}
+```
+
+Applied to editor, preview, and alerts panels for visual consistency.
+
+## Performance & Limits
+
+### Document Size Limits
+
+For performance and security:
+
+| Limit | Value | Reason |
+|-------|-------|--------|
+| **Maximum text length** | 1MB (1,048,576 bytes) | Prevents timeout on Vale execution |
+| **Typical processing time** | < 2 seconds | For documents under 10,000 words |
+| **Recommended max** | 50KB | Optimal performance for linting |
+
+### API Request Validation
+
+The `/api/lint` endpoint enforces strict validation (from `app/api/lint/route.ts:21-43`):
+
+```typescript
+// Text validation
+if (!text || typeof text !== 'string') {
+  return NextResponse.json({ error: 'No text provided' }, { status: 400 });
+}
+
+// Length check
+if (text.length > MAX_TEXT_LENGTH) {
+  return NextResponse.json({ error: 'Text too large' }, { status: 400 });
+}
+
+// Style guide whitelist
+if (!ALLOWED_STYLES.includes(style)) {
+  return NextResponse.json({ error: 'Invalid style guide' }, { status: 400 });
+}
+
+// Custom rule limits
+if (customRules.length > MAX_CUSTOM_RULES) {
+  return NextResponse.json({ error: 'Too many custom rules' }, { status: 400 });
+}
+```
+
+These limits prevent abuse and ensure reliable performance.
+
+### Security Measures
+
+<Info>
+  Verbalize implements several security protections to ensure safe operation:
+</Info>
+
+- **Style guide whitelist**: Only Google, Microsoft, and RedHat are allowed
+- **File name sanitization**: Custom rule filenames cleaned of dangerous characters
+- **Path traversal prevention**: Only base filenames accepted (no `../` paths)
+- **Temporary file cleanup**: All temp files deleted after processing
+- **No HTML rendering**: `react-markdown` does not render raw HTML by default
+- **Input length limits**: Both document and custom rules have size caps
+
+## Vale Configuration
+
+### Dynamic Configuration Generation
+
+Verbalize generates a `.vale.ini` file per lint request:
+
+```ini
+StylesPath = /tmp/vale-xyz/styles
+MinAlertLevel = suggestion
+[*.md]
+BasedOnStyles = Google, Custom
+```
+
+**Key configuration choices**:
+
+- **StylesPath**: Points to temporary directory with symlinked styles
+- **MinAlertLevel**: Set to `suggestion` to show all severity levels
+- **BasedOnStyles**: Combines selected base style + Custom (if rules uploaded)
+
+### Permanent Configuration
+
+The project includes a base `.vale.ini` for local development:
+
+```ini
+StylesPath = styles
+MinAlertLevel = suggestion
+Packages = Google, Microsoft, RedHat
+[*.md]
+BasedOnStyles = Vale, Google, Microsoft, RedHat
+```
+
+This configuration is NOT used during web linting—only for local CLI usage.
+
+### Style Directories
+
+The `styles/` directory contains three subdirectories:
+
+```
+styles/
+├── Google/       # ~50 rule files
+├── Microsoft/    # ~40 rule files
+└── RedHat/       # ~30 rule files
+```
+
+Each contains `.yml` rule files and a `meta.json` descriptor. These are symlinked into temporary directories during linting to avoid copying overhead.
+
+## Testing & Quality
+
+### End-to-End Testing
+
+Verbalize includes Playwright tests in the `tests/` directory:
+
+```bash
+# Run all tests
+npm test
+
+# Run with UI
+npm run test:ui
+
+# Run specific test
+npx playwright test tests/lint.spec.ts
+```
+
+**Test coverage includes**:
+- Application loads correctly
+- Editor accepts text input
+- Style guide selection works
+- Linting button triggers API call
+- Alerts display properly
+- Custom rule upload functions
+- Dark mode toggle operates
+
+### Type Safety
+
+Verbalize is written in TypeScript with strict mode enabled:
+
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true
+  }
+}
+```
+
+All components, API routes, and utilities are fully typed.
+
+## Deployment
+
+### Netlify Deployment
+
+Verbalize is optimized for Netlify deployment (see `netlify.toml`):
+
+```toml
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[functions]
+  node_bundler = "esbuild"
+```
+
+**Deployment steps**:
+
+1. Push code to Git repository
+2. Connect repository to Netlify
+3. Set build command: `npm run build`
+4. Set publish directory: `.next`
+5. Deploy—Vale binary installs automatically via post-install script
+
+### Environment Variables
+
+No environment variables are required for basic operation. Optional:
+
+| Variable | Purpose | Default |
+|----------|---------|----------|
+| `VALE_CONFIG_PATH` | Override Vale config location | `./.vale.ini` |
+| `VALE_STYLES_PATH` | Override styles directory | `./styles` |
+| `NODE_ENV` | Set environment mode | `production` |
+
+## Keyboard & Accessibility
+
+### Keyboard Navigation
+
+- **Tab**: Navigate between interactive elements
+- **Enter**: Activate buttons (Run Linting, Upload, etc.)
+- **Escape**: Close sidebar (when focused)
+
+### Screen Reader Support
+
+All interactive elements include:
+
+- **ARIA labels**: Descriptive labels for buttons and inputs
+- **Title attributes**: Tooltips for icon-only buttons
+- **Semantic HTML**: Proper use of `<button>`, `<label>`, `<section>`, etc.
+
+### Focus Management
+
+When clicking an alert:
+
+1. Editor receives focus
+2. Text is selected
+3. Selection is scrolled into view
+4. Screen readers announce the selected text
+
+## Advanced Usage
+
+### Multiple Documents Workflow
+
+1. Write first document
+2. Run linting and fix issues
+3. Copy content to clipboard
+4. Paste into your documentation system
+5. Clear editor
+6. Repeat for next document
+
+### Style Guide Comparison
+
+Test document against all three style guides:
+
+1. Write content
+2. Select Google → Run linting → Note violations
+3. Select Microsoft → Run linting → Note violations
+4. Select Red Hat → Run linting → Note violations
+5. Choose the guide that best fits your documentation needs
+
+### Custom Rule Development
+
+Iterate on custom rules:
+
+1. Write initial rule `.yml` file
+2. Upload to Verbalize
+3. Test against sample documents
+4. Download and refine rule based on results
+5. Re-upload and re-test
+6. Save final version to your organization's style guide repository
+
+## What's Next?
+
+<CardGroup cols={2}>
+  <Card title="Vale Documentation" icon="book-open" href="https://vale.sh/docs/">
+    Learn Vale's rule syntax, configuration options, and advanced features.
+  </Card>
+  <Card title="Style Guides" icon="palette">
+    Read the official Google, Microsoft, and Red Hat style guides to understand the rules being applied.
+  </Card>
+  <Card title="Contributing" icon="code-branch">
+    Check the repository's CONTRIBUTING.md (if available) to help improve Verbalize.
+  </Card>
+  <Card title="Report Issues" icon="bug">
+    Found a bug or have a feature request? Open an issue in the project repository.
+  </Card>
+</CardGroup>
+
+## Summary
+
+Verbalize provides:
+
+✅ **Real-time Markdown editing** with live preview  
+✅ **Professional style guide linting** (Google, Microsoft, Red Hat)  
+✅ **Custom rule support** for organization-specific requirements  
+✅ **Interactive diagnostics** with click-to-navigate  
+✅ **Dark mode** for comfortable writing  
+✅ **Secure, server-side processing** with Vale CLI  
+✅ **Type-safe TypeScript** codebase  
+✅ **Netlify-ready deployment** with automated Vale installation  
+
+Happy writing!

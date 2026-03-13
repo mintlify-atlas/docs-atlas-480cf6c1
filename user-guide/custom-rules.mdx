@@ -1,0 +1,645 @@
+---
+title: 'Custom Rules'
+description: 'Create and upload custom Vale rules for project-specific style requirements'
+icon: 'file-code'
+---
+
+## Overview
+
+Custom rules allow you to extend Verbalize's built-in style guides with your own project-specific requirements. You can enforce:
+
+- **Brand-specific terminology** (product names, trademarks)
+- **Organization style preferences** (preferred terms, forbidden words)
+- **Domain-specific conventions** (industry jargon, technical standards)
+- **Team agreements** (custom formatting, local style decisions)
+
+<Info>
+  Custom rules work alongside the base style guide (Google, Microsoft, or RedHat), not as replacements.
+</Info>
+
+## Quick Start
+
+<Steps>
+  <Step title="Download the example rule">
+    Click the **Example** link in the sidebar's "Custom Rules" section to download `example-style.yml`
+  </Step>
+  
+  <Step title="Modify the rule">
+    Edit the YAML file to define your custom checks (see [Rule Structure](#rule-structure))
+  </Step>
+  
+  <Step title="Upload your rule">
+    Click **Upload .yml rule** and select your modified file
+  </Step>
+  
+  <Step title="Run linting">
+    Click **Run Linting** to apply both base and custom rules
+  </Step>
+</Steps>
+
+---
+
+## Creating Custom Rules
+
+### File Format
+
+Custom rules must be:
+- **YAML format** (`.yml` extension)
+- Valid Vale rule syntax
+- UTF-8 encoded
+- Under **10KB** in size
+
+### Rule Structure
+
+Every Vale rule file contains these key fields:
+
+```yaml
+extends: existence         # Rule type (existence, substitution, etc.)
+message: "Your message"   # What to tell the user
+level: suggestion         # Severity: error, warning, or suggestion
+tokens:                   # Patterns to match
+  - pattern1
+  - pattern2
+```
+
+<Note>
+  Vale supports multiple rule types. We'll cover the most common ones below.
+</Note>
+
+---
+
+## Rule Types
+
+### 1. Existence Rules
+
+Detect the **presence** of specific words or phrases:
+
+```yaml
+extends: existence
+message: "Consider removing '%s'"
+level: suggestion
+tokens:
+  - very
+  - extremely
+  - really
+  - quite
+  - perhaps
+```
+
+**When to use**: Flag weak or unnecessary words (hedge words, filler, jargon)
+
+<Accordion title="Real Example: Hedging Language">
+  ```yaml
+  extends: existence
+  message: "Consider removing '%s'"
+  level: suggestion
+  tokens:
+    - very
+    - extremely
+    - really
+    - quite
+    - perhaps
+  ```
+  
+  **Detects**: `This is very important` → Suggests removing "very"
+</Accordion>
+
+---
+
+### 2. Substitution Rules
+
+Suggest **replacements** for specific terms:
+
+```yaml
+extends: substitution
+message: "Use '%s' instead of '%s'"
+level: error
+ignorecase: true
+swap:
+  e.g.: for example
+  i.e.: that is
+  utilize: use
+  leverage: use
+```
+
+**When to use**: Enforce preferred terminology, simplify language, maintain consistency
+
+<Accordion title="Real Example: Brand Terms">
+  ```yaml
+  extends: substitution
+  message: "Use '%s' instead of '%s'"
+  level: error
+  ignorecase: false
+  swap:
+    Verbalize: Verbalize  # Enforce exact capitalization
+    verbalize: Verbalize
+    VERBALIZE: Verbalize
+  ```
+  
+  **Detects**: `verbalize` → Suggests `Verbalize`
+</Accordion>
+
+---
+
+### 3. Occurrence Rules
+
+Limit how often something appears:
+
+```yaml
+extends: occurrence
+message: "More than one exclamation mark detected"
+level: warning
+max: 1
+token: '!'
+```
+
+**When to use**: Prevent overuse of punctuation, limit repetition
+
+---
+
+### 4. Repetition Rules
+
+Detect repeated words:
+
+```yaml
+extends: repetition
+message: "'%s' is repeated"
+level: error
+ignorecase: true
+tokens:
+  - '\b(\w+)\s+\1\b'
+```
+
+**When to use**: Catch accidental word duplication ("the the")
+
+---
+
+### 5. Consistency Rules
+
+Enforce consistent spelling variations:
+
+```yaml
+extends: consistency
+message: "Inconsistent spelling of '%s'"
+level: error
+ignorecase: true
+either:
+  advisor: adviser
+  cancelled: canceled
+  email: e-mail
+```
+
+**When to use**: Pick one spelling variant and enforce it throughout
+
+---
+
+### 6. Conditional Rules
+
+Require one term when another appears:
+
+```yaml
+extends: conditional
+message: "Spell out '%s' if it's unfamiliar to the audience"
+level: suggestion
+first: '\b([A-Z]{3,5})\b'     # Detect acronyms
+second: '(?:\b[A-Z][a-z]+ )+\(([A-Z]{3,5})\)' # Require definition
+```
+
+**When to use**: Ensure acronyms are defined, verify required context
+
+<Accordion title="Real Example from Google Style">
+  The Google style guide uses this pattern to check that acronyms are spelled out on first use:
+  
+  ```yaml
+  extends: conditional
+  message: "Spell out '%s', if it's unfamiliar to the audience."
+  level: suggestion
+  ignorecase: false
+  first: '\b([A-Z]{3,5})\b'
+  second: '(?:\b[A-Z][a-z]+ )+\(([A-Z]{3,5})\)'
+  exceptions:
+    - API
+    - CPU
+    - HTML
+    # ... known acronyms
+  ```
+</Accordion>
+
+---
+
+## Example Custom Rules
+
+### Example 1: Project Terminology
+
+<CodeGroup>
+```yaml ProjectTerms.yml
+extends: substitution
+message: "Use '%s' instead of '%s'"
+level: error
+ignorecase: true
+swap:
+  # Enforce proper product names
+  verbalize app: Verbalize
+  vale linter: Vale
+  
+  # Standardize technical terms
+  style-guide: style guide
+  lint-check: linting check
+  
+  # Avoid deprecated terms
+  old feature: legacy feature
+```
+</CodeGroup>
+
+**Purpose**: Maintain consistent product and technical terminology across documentation.
+
+---
+
+### Example 2: Forbidden Words
+
+<CodeGroup>
+```yaml Forbidden.yml
+extends: existence
+message: "Avoid using '%s' in documentation"
+level: warning
+ignorecase: true
+tokens:
+  - blacklist
+  - whitelist
+  - master/slave
+  - simple
+  - just
+  - obviously
+  - clearly
+```
+</CodeGroup>
+
+**Purpose**: Flag problematic language and assumptions about the reader.
+
+---
+
+### Example 3: Code Block Labels
+
+<CodeGroup>
+```yaml CodeBlocks.yml
+extends: existence
+message: "Code blocks should include a language identifier"
+level: suggestion
+tokens:
+  - '```\n'  # Code block without language
+```
+</CodeGroup>
+
+**Purpose**: Ensure proper syntax highlighting by requiring language tags on code blocks.
+
+---
+
+### Example 4: Placeholder Text
+
+<CodeGroup>
+```yaml Placeholders.yml
+extends: existence
+message: "Replace placeholder text '%s' before publishing"
+level: error
+tokens:
+  - TODO
+  - FIXME
+  - TBD
+  - XXX
+  - \[\[.*?\]\]  # [[placeholder]]
+```
+</CodeGroup>
+
+**Purpose**: Prevent publishing documentation with unfinished sections.
+
+---
+
+### Example 5: Company Acronyms
+
+<CodeGroup>
+```yaml Acronyms.yml
+extends: conditional
+message: "Define acronym '%s' on first use"
+level: warning
+first: '\b(SLA|KPI|ROI|TCO)\b'
+second: '\b\w+[^(]+\((SLA|KPI|ROI|TCO)\)'
+```
+</CodeGroup>
+
+**Purpose**: Ensure business acronyms are defined for readers unfamiliar with them.
+
+---
+
+## Uploading Custom Rules
+
+### Via Sidebar
+
+1. Click the **Upload .yml rule** button in the sidebar
+2. Select one or more `.yml` files (up to **10 rules**)
+3. Rules appear as chips below the upload button
+4. Each chip shows the rule filename
+
+### Removing Rules
+
+To remove an uploaded rule:
+- Click the **trash icon** next to the rule's name chip
+- The rule is removed immediately
+- Re-run linting to see updated results
+
+<Warning>
+  Removing a rule does not persist across page refreshes. Custom rules are session-based only.
+</Warning>
+
+---
+
+## Rule Constraints
+
+Verbalize enforces these limits for security and performance:
+
+| Constraint | Limit | Reason |
+|------------|-------|--------|
+| **Max rules** | 10 rules | Prevents server overload |
+| **Max file size** | 10KB per rule | Keeps processing fast |
+| **Allowed extensions** | `.yml` only | Ensures valid YAML |
+| **Total document size** | 1MB | API timeout prevention |
+
+<Info>
+  These limits are defined in `app/api/lint/route.ts:12-14`
+</Info>
+
+---
+
+## Advanced Rule Features
+
+### Case Sensitivity
+
+Control whether matching is case-sensitive:
+
+```yaml
+extends: existence
+message: "Use lowercase 'internet'"
+level: warning
+ignorecase: false  # Case-sensitive matching
+tokens:
+  - Internet
+```
+
+### Word Boundaries
+
+Use `\b` to match whole words only:
+
+```yaml
+tokens:
+  - \bapi\b      # Matches "api" but not "rapid"
+  - API          # Matches "API" anywhere, including "RAPID-API"
+```
+
+### Regular Expressions
+
+Use regex for complex patterns:
+
+```yaml
+extends: existence
+message: "Use numeric version format (e.g., '2.0')"
+level: error
+tokens:
+  - 'version [a-zA-Z]+'  # Detects "version two"
+```
+
+### Exceptions
+
+Exclude specific terms from rules:
+
+```yaml
+extends: existence
+message: "Avoid abbreviations"
+level: warning
+tokens:
+  - \b[A-Z]{2,}\b
+exceptions:
+  - API
+  - HTTP
+  - URL
+```
+
+---
+
+## Testing Custom Rules
+
+<Steps>
+  <Step title="Write test content">
+    Add text to the editor that should trigger your rule:
+    
+    ```markdown
+    This is very important content.
+    ```
+  </Step>
+  
+  <Step title="Upload your rule">
+    Upload the custom rule YAML file
+  </Step>
+  
+  <Step title="Run linting">
+    Click **Run Linting** to test
+  </Step>
+  
+  <Step title="Verify results">
+    Check that your rule appears in the alerts:
+    
+    - **Rule name**: `Custom.YourRuleName`
+    - **Message**: Your custom message
+    - **Severity**: Your chosen level
+  </Step>
+</Steps>
+
+<Tip>
+  Start with `level: suggestion` while testing. Once confirmed, increase to `warning` or `error`.
+</Tip>
+
+---
+
+## Rule Naming Conventions
+
+Follow these patterns for clarity:
+
+| Pattern | Example | Purpose |
+|---------|---------|----------|
+| `Action.yml` | `Forbidden.yml` | Describes what the rule does |
+| `Context.yml` | `BrandTerms.yml` | Describes what the rule checks |
+| `Format.yml` | `VersionNumbers.yml` | Describes formatting rules |
+
+**Avoid**:
+- Generic names like `rule1.yml`
+- Special characters in filenames
+- Spaces (use hyphens or camelCase)
+
+---
+
+## Custom Rules in the Linting API
+
+When you upload custom rules, Verbalize:
+
+1. Creates a temporary `Custom` style directory (see `app/api/lint/route.ts:73-95`)
+2. Writes your rules as individual `.yml` files
+3. Adds a `meta.json` file for Vale recognition
+4. Updates the Vale configuration to include: `BasedOnStyles = Google, Custom`
+5. Runs Vale with both base and custom rules
+6. Returns combined results
+
+All rule files are:
+- **Sanitized** to prevent path traversal attacks
+- **Validated** for size and format
+- **Cleaned up** after linting completes
+
+<Warning>
+  Custom rules are **temporary**. They're stored only for the duration of the linting operation and deleted afterward.
+</Warning>
+
+---
+
+## Example Rule from Verbalize
+
+Here's the example rule included with Verbalize (`public/example-style.yml`):
+
+<CodeGroup>
+```yaml example-style.yml
+extends: existence
+message: "Consider removing '%s'"
+level: suggestion
+tokens:
+  - very
+  - extremely
+  - really
+  - quite
+  - perhaps
+```
+</CodeGroup>
+
+This rule flags common hedge words that weaken technical writing.
+
+**Download**: Available via the **Example** link in the sidebar's "Custom Rules" section.
+
+---
+
+## Troubleshooting
+
+### Rule Not Triggering
+
+<AccordionGroup>
+  <Accordion title="Check syntax">
+    - Ensure valid YAML format (use a validator)
+    - Verify `extends`, `message`, `level`, and `tokens` are present
+    - Check for typos in field names
+  </Accordion>
+  
+  <Accordion title="Check patterns">
+    - Test regex patterns in a tool like [regex101.com](https://regex101.com)
+    - Use `\b` for word boundaries
+    - Remember `ignorecase` defaults to `true`
+  </Accordion>
+  
+  <Accordion title="Check test content">
+    - Ensure your test text actually contains the pattern
+    - Verify case sensitivity settings
+    - Check for exceptions that might exclude your test case
+  </Accordion>
+</AccordionGroup>
+
+### Rule Always Triggering
+
+<AccordionGroup>
+  <Accordion title="Pattern too broad">
+    - Add `\b` word boundaries to prevent partial matches
+    - Use more specific regex patterns
+    - Add exceptions for valid cases
+  </Accordion>
+  
+  <Accordion title="Case sensitivity">
+    - Check `ignorecase` setting
+    - Adjust patterns to match intended case
+  </Accordion>
+</AccordionGroup>
+
+### Upload Fails
+
+<AccordionGroup>
+  <Accordion title="File too large">
+    - Rule files must be under 10KB
+    - Reduce rule complexity or split into multiple files
+  </Accordion>
+  
+  <Accordion title="Too many rules">
+    - Maximum 10 rules per session
+    - Remove unused rules before uploading new ones
+  </Accordion>
+  
+  <Accordion title="Invalid format">
+    - Ensure file has `.yml` extension
+    - Validate YAML syntax
+    - Check file encoding (must be UTF-8)
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Vale Rule Documentation
+
+For comprehensive Vale rule syntax:
+
+<CardGroup cols={2}>
+  <Card title="Vale Styles" icon="book" href="https://vale.sh/docs/topics/styles/">
+    Official documentation for all rule types
+  </Card>
+  <Card title="Vale Packages" icon="box" href="https://vale.sh/docs/topics/packages/">
+    Browse community-created style packages
+  </Card>
+  <Card title="Regex Reference" icon="code" href="https://regex101.com/">
+    Test and debug regular expressions
+  </Card>
+  <Card title="YAML Validator" icon="check" href="https://www.yamllint.com/">
+    Validate YAML syntax online
+  </Card>
+</CardGroup>
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Start simple">
+    - Begin with `existence` rules (easiest to write)
+    - Test with obvious cases before complex patterns
+    - Use `suggestion` level during development
+  </Accordion>
+  
+  <Accordion title="Be specific">
+    - Write clear, actionable messages
+    - Include examples in messages when helpful
+    - Link to internal style guides if available
+  </Accordion>
+  
+  <Accordion title="Test thoroughly">
+    - Test positive cases (should trigger)
+    - Test negative cases (should not trigger)
+    - Test edge cases (boundaries, capitalization)
+  </Accordion>
+  
+  <Accordion title="Document your rules">
+    - Add comments to complex regex patterns
+    - Maintain a style guide document explaining each rule
+    - Share rules with your team for feedback
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Understanding Results" icon="chart-line" href="/user-guide/understanding-results">
+    Learn how custom rule alerts appear alongside base style results
+  </Card>
+  <Card title="Style Guides" icon="book" href="/user-guide/style-guides">
+    Review the built-in style guides your rules will extend
+  </Card>
+</CardGroup>

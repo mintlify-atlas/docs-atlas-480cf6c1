@@ -1,0 +1,464 @@
+---
+title: 'POST /api/lint'
+description: 'Analyze documentation text against Vale style guides'
+---
+
+## Endpoint
+
+```
+POST /api/lint
+```
+
+Analyzes the provided text using Vale and returns an array of linting alerts (errors, warnings, and suggestions) based on the selected style guide and optional custom rules.
+
+## Request Body
+
+<ParamField body="text" type="string" required>
+  The documentation text to analyze. Must be a non-empty string.
+  
+  **Maximum length**: 1,048,576 characters (1MB)
+  
+  **Format**: Markdown is recommended but any plain text is supported.
+</ParamField>
+
+<ParamField body="style" type="string" required>
+  The base style guide to use for validation.
+  
+  **Allowed values**: `Google`, `Microsoft`, `RedHat`
+  
+  **Default behavior**: Must be explicitly provided; no default value.
+</ParamField>
+
+<ParamField body="customRules" type="array" default="[]">
+  Optional array of custom Vale rules to apply in addition to the base style guide.
+  
+  **Maximum items**: 10 rules
+  
+  **Structure**:
+  ```typescript
+  interface CustomRule {
+    name: string;      // Rule filename (e.g., "NoPassive.yml")
+    content: string;   // YAML content of the Vale rule
+  }
+  ```
+  
+  **Maximum rule content length**: 10,240 characters (10KB) per rule
+</ParamField>
+
+## Request Validation
+
+The API enforces the following security and performance constraints:
+
+| Constraint | Limit | Error Message |
+|------------|-------|---------------|
+| Text presence | Required | "No text provided or invalid format" |
+| Text length | 1,048,576 chars | "Text exceeds maximum allowed length of 1048576 characters" |
+| Style guide | Whitelist only | "Invalid style guide selected" |
+| Custom rules count | 10 maximum | "Too many custom rules. Maximum is 10" |
+| Rule content length | 10,240 chars | "Rule \"[name]\" exceeds maximum allowed length of 10240 characters" |
+
+See `app/api/lint/route.ts:10-14` for constant definitions:
+
+```typescript
+const ALLOWED_STYLES = ['Google', 'Microsoft', 'RedHat'];
+const MAX_TEXT_LENGTH = 1024 * 1024; // 1MB
+const MAX_CUSTOM_RULES = 10;
+const MAX_RULE_LENGTH = 10 * 1024; // 10KB
+```
+
+## Response
+
+<ResponseField name="ValeAlert[]" type="array">
+  Array of Vale alerts found in the text. Empty array if no issues detected.
+</ResponseField>
+
+### ValeAlert Object Structure
+
+<ResponseField name="Action" type="object">
+  Suggested action to fix the issue.
+  
+  <Expandable title="properties">
+    <ResponseField name="Name" type="string">
+      Action name (e.g., "replace", "remove")
+    </ResponseField>
+    
+    <ResponseField name="Params" type="string[] | null">
+      Parameters for the action (e.g., suggested replacements)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="Span" type="[number, number]">
+  Character position range within the line where the issue occurs.
+  
+  **Format**: `[startColumn, endColumn]` (1-indexed)
+</ResponseField>
+
+<ResponseField name="Check" type="string">
+  The Vale rule identifier that triggered this alert.
+  
+  **Format**: `StyleName.RuleName` (e.g., "Google.Headings", "Microsoft.Avoid")
+</ResponseField>
+
+<ResponseField name="Description" type="string">
+  Detailed description of the rule or style violation.
+</ResponseField>
+
+<ResponseField name="Link" type="string">
+  URL to documentation explaining the rule (may be empty string).
+</ResponseField>
+
+<ResponseField name="Message" type="string">
+  Human-readable message describing the issue and how to fix it.
+</ResponseField>
+
+<ResponseField name="Severity" type="string">
+  Alert severity level.
+  
+  **Possible values**: `error`, `warning`, `suggestion`
+</ResponseField>
+
+<ResponseField name="Match" type="string">
+  The exact text that triggered the alert.
+</ResponseField>
+
+<ResponseField name="Line" type="number">
+  Line number where the issue occurs (1-indexed).
+</ResponseField>
+
+## Example Request
+
+```bash
+curl -X POST https://your-domain.com/api/lint \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "# Getting Started\n\nThis document will walk you through the setup process. We will be utilizing several tools.",
+    "style": "Google",
+    "customRules": []
+  }'
+```
+
+### With Custom Rules
+
+```bash
+curl -X POST https://your-domain.com/api/lint \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "The system is utilized by developers.",
+    "style": "Microsoft",
+    "customRules": [
+      {
+        "name": "NoUtilize.yml",
+        "content": "extends: substitution\nmessage: Use \"use\" instead of \"utilize\"\nlevel: error\nswap:\n  utilize: use\n  utilized: used\n  utilizing: using"
+      }
+    ]
+  }'
+```
+
+## Example Response
+
+### Success with Alerts
+
+```json
+[
+  {
+    "Action": {
+      "Name": "replace",
+      "Params": ["use"]
+    },
+    "Span": [21, 29],
+    "Check": "Google.WordList",
+    "Description": "'utilize' is too wordy",
+    "Link": "https://developers.google.com/style/word-list#utilize",
+    "Message": "Use 'use' instead of 'utilize'.",
+    "Severity": "warning",
+    "Match": "utilizing",
+    "Line": 3
+  },
+  {
+    "Action": {
+      "Name": "replace",
+      "Params": ["guides", "leads"]
+    },
+    "Span": [38, 48],
+    "Check": "Google.Will",
+    "Description": "Avoid using 'will'",
+    "Link": "",
+    "Message": "Avoid using 'will'.",
+    "Severity": "warning",
+    "Match": "will walk",
+    "Line": 3
+  }
+]
+```
+
+### Success with No Issues
+
+```json
+[]
+```
+
+### Error Response (400)
+
+```json
+{
+  "error": "Text exceeds maximum allowed length of 1048576 characters"
+}
+```
+
+### Error Response (500)
+
+```json
+{
+  "error": "Vale execution failed"
+}
+```
+
+## Custom Rules
+
+Custom rules allow you to extend Vale with organization-specific style requirements. Rules must be written in Vale's YAML format.
+
+### Rule Structure Example
+
+```yaml
+extends: substitution
+message: Use "%s" instead of "%s"
+level: warning
+ignorecase: true
+swap:
+  smartphone: mobile device
+  tablet: mobile device
+  web app: web application
+```
+
+### Supported Rule Types
+
+- **substitution**: Word/phrase replacements
+- **existence**: Flag occurrences of specific patterns
+- **occurrence**: Limit frequency of words/phrases
+- **repetition**: Detect repeated words
+- **consistency**: Ensure consistent spelling/capitalization
+- **conditional**: Context-dependent rules
+- **capitalization**: Title case and sentence case enforcement
+- **readability**: Measure sentence complexity
+- **spelling**: Custom dictionary checks
+
+For complete Vale rule syntax, see the [official documentation](https://vale.sh/docs/topics/styles/).
+
+### Custom Rule Implementation
+
+When custom rules are provided (see `app/api/lint/route.ts:72-98`):
+
+1. A temporary `Custom` style directory is created
+2. Each rule is validated and sanitized:
+   - Filenames are normalized (path traversal prevention)
+   - `.yml` extension is enforced
+   - Content length is validated
+3. Rules are written to the temporary style directory
+4. Vale configuration is updated: `BasedOnStyles = Google, Custom`
+5. All rules are applied during linting
+6. Temporary files are cleaned up after execution
+
+## TypeScript Integration
+
+From the Verbalize frontend (`app/page.tsx:8-21`):
+
+```typescript
+interface ValeAlert {
+  Action: {
+    Name: string;
+    Params: string[] | null;
+  };
+  Span: [number, number];
+  Check: string;
+  Description: string;
+  Link: string;
+  Message: string;
+  Severity: string;
+  Match: string;
+  Line: number;
+}
+
+interface CustomRule {
+  name: string;
+  content: string;
+}
+```
+
+### Frontend Usage Example
+
+From `app/page.tsx:49-82`:
+
+```typescript
+const handleLint = async () => {
+  if (!text.trim()) {
+    alert('Please enter some text to lint.');
+    return;
+  }
+
+  // Normalize newlines to \n for consistent line/column reporting
+  const normalizedText = text.replace(/\r\n/g, '\n');
+  
+  setLoading(true);
+  setResults([]);
+  
+  try {
+    const response = await fetch('/api/lint', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        text: normalizedText, 
+        style, 
+        customRules 
+      }),
+    });
+    
+    const data = await response.json();
+    
+    if (response.ok && Array.isArray(data)) {
+      setResults(data as ValeAlert[]);
+    } else {
+      console.error('Linting error:', data);
+      alert('Linting failed: ' + (data.error || 'Unknown error'));
+    }
+  } catch (error) {
+    console.error('Failed to lint:', error);
+    alert('Failed to connect to the linting service.');
+  } finally {
+    setLoading(false);
+  }
+};
+```
+
+## Implementation Details
+
+### Vale Execution Flow
+
+The API follows this process (see `app/api/lint/route.ts:45-144`):
+
+1. **Create temporary directory**: `mkdtemp` in system temp location
+2. **Write text to file**: Vale requires file-based input (`doc.md`)
+3. **Setup styles directory**: 
+   - Create temporary styles path
+   - Symlink built-in styles (Google, Microsoft, RedHat)
+   - Create `Custom` style directory if custom rules provided
+4. **Generate Vale config**: Write `.vale.ini` with:
+   ```ini
+   StylesPath = /tmp/vale-xxxxx/styles
+   MinAlertLevel = suggestion
+   [*.md]
+   BasedOnStyles = Google, Custom
+   ```
+5. **Execute Vale binary**: 
+   ```bash
+   vale --config=/tmp/.vale.ini --output=JSON /tmp/doc.md
+   ```
+6. **Parse JSON output**: Extract alerts for the temporary file
+7. **Cleanup**: Remove temporary directory and all contents
+
+### Binary Permissions
+
+On serverless environments, the Vale binary permissions are set at runtime (`route.ts:112-116`):
+
+```typescript
+try {
+  await fs.chmod(valePath, 0o755);
+} catch (err) {
+  console.warn('Could not chmod vale binary:', err);
+}
+```
+
+### Error Handling
+
+Vale returns non-zero exit codes when alerts are found. The API handles this by parsing stdout even on "errors" (`route.ts:124-136`):
+
+```typescript
+try {
+  const { stdout } = await execFileAsync(valePath, [...]);
+  const results = JSON.parse(stdout);
+  return NextResponse.json(results[tmpFile] || []);
+} catch (error) {
+  // Vale returns non-zero if alerts found
+  if (execError.stdout) {
+    const results = JSON.parse(execError.stdout);
+    return NextResponse.json(results[tmpFile] || []);
+  }
+  return NextResponse.json(
+    { error: 'Vale execution failed' }, 
+    { status: 500 }
+  );
+}
+```
+
+## Performance Considerations
+
+- **Average response time**: 100-500ms for typical documents (< 5,000 words)
+- **Large documents**: Documents approaching 1MB may take 2-3 seconds
+- **Custom rules overhead**: Each additional custom rule adds ~10-50ms
+- **Cold starts**: First request after deployment may take 3-5 seconds
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Normalize line endings">
+    Always normalize line endings to `\n` before sending to ensure accurate line/column reporting:
+    
+    ```typescript
+    const normalizedText = text.replace(/\r\n/g, '\n');
+    ```
+  </Accordion>
+  
+  <Accordion title="Handle empty results">
+    An empty array `[]` indicates no issues found. This is a success state:
+    
+    ```typescript
+    if (results.length === 0) {
+      console.log('Document is clean!');
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="Process alerts by severity">
+    Filter and prioritize alerts by severity:
+    
+    ```typescript
+    const errors = results.filter(a => a.Severity === 'error');
+    const warnings = results.filter(a => a.Severity === 'warning');
+    const suggestions = results.filter(a => a.Severity === 'suggestion');
+    ```
+  </Accordion>
+  
+  <Accordion title="Implement timeout handling">
+    Set appropriate timeouts for large documents:
+    
+    ```typescript
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    
+    const response = await fetch('/api/lint', {
+      method: 'POST',
+      signal: controller.signal,
+      // ...
+    });
+    
+    clearTimeout(timeout);
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Related Resources
+
+<CardGroup cols={2}>
+  <Card title="API Overview" icon="book" href="/api-reference/overview">
+    Learn about API authentication, rate limits, and style guides
+  </Card>
+  <Card title="Vale Rule Syntax" icon="code" href="https://vale.sh/docs/topics/styles/">
+    Create custom Vale rules for your organization
+  </Card>
+  <Card title="Source Code" icon="github" href="https://github.com/your-org/verbalize/blob/main/app/api/lint/route.ts">
+    View the complete implementation on GitHub
+  </Card>
+  <Card title="Style Guides" icon="palette" href="https://vale.sh/docs/topics/packages/">
+    Browse available Vale style guide packages
+  </Card>
+</CardGroup>

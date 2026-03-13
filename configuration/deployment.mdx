@@ -1,0 +1,327 @@
+---
+title: Deployment
+description: Deploy Verbalize to production environments
+---
+
+## Overview
+
+Verbalize is built with Next.js and can be deployed to various platforms. The recommended deployment platform is Netlify, but it can be deployed to any platform that supports Next.js applications.
+
+## Netlify Deployment
+
+Verbalize is optimized for Netlify deployment with serverless functions.
+
+### Netlify Configuration
+
+The `netlify.toml` file configures the build and deployment settings:
+
+```toml
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[functions]
+  # Ensure the vale binary and styles are included in the serverless function bundle
+  included_files = ["vale", "styles/**"]
+```
+
+### Build Settings
+
+<ParamField path="build.command" type="string" required>
+  The command to build your application. For Verbalize, this runs the Next.js build process.
+  
+  ```toml
+  command = "npm run build"
+  ```
+</ParamField>
+
+<ParamField path="build.publish" type="string" required>
+  The directory to publish. Next.js outputs to `.next` by default.
+  
+  ```toml
+  publish = ".next"
+  ```
+</ParamField>
+
+### Function Configuration
+
+<ParamField path="functions.included_files" type="array" required>
+  Files to include in the serverless function bundle. Critical for Vale functionality.
+  
+  ```toml
+  included_files = ["vale", "styles/**"]
+  ```
+  
+  This ensures:
+  - Vale binary is available at runtime
+  - All style guides are accessible to the linting API
+</ParamField>
+
+## Deploy to Netlify
+
+### Using Netlify CLI
+
+1. Install the Netlify CLI:
+
+```bash
+npm install -g netlify-cli
+```
+
+2. Login to Netlify:
+
+```bash
+netlify login
+```
+
+3. Initialize the site:
+
+```bash
+netlify init
+```
+
+4. Deploy:
+
+```bash
+# Deploy to draft URL
+netlify deploy
+
+# Deploy to production
+netlify deploy --prod
+```
+
+### Using Git Integration
+
+1. Push your code to GitHub, GitLab, or Bitbucket
+2. Connect your repository to Netlify
+3. Configure build settings:
+   - **Build command**: `npm run build`
+   - **Publish directory**: `.next`
+4. Add environment variables (see [Environment Variables](/configuration/environment-variables))
+5. Deploy
+
+## NPM Scripts
+
+Verbalize includes the following deployment-related scripts in `package.json`:
+
+<CodeGroup>
+
+```json package.json
+{
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "postinstall": "node scripts/install-vale.js"
+  }
+}
+```
+
+</CodeGroup>
+
+### Script Descriptions
+
+<ParamField path="dev" type="string">
+  Starts the Next.js development server on port 3000.
+  
+  ```bash
+  npm run dev
+  ```
+</ParamField>
+
+<ParamField path="build" type="string">
+  Creates an optimized production build.
+  
+  ```bash
+  npm run build
+  ```
+</ParamField>
+
+<ParamField path="start" type="string">
+  Starts the Next.js production server.
+  
+  ```bash
+  npm run start
+  ```
+</ParamField>
+
+<ParamField path="postinstall" type="string">
+  Automatically runs after `npm install` to download and install the Vale binary.
+  
+  ```bash
+  node scripts/install-vale.js
+  ```
+  
+  This is critical for ensuring Vale is available in production environments.
+</ParamField>
+
+## Vale Binary Installation
+
+The `postinstall` script ensures Vale is installed during deployment:
+
+```bash
+node scripts/install-vale.js
+```
+
+This script:
+1. Detects the platform (Linux, macOS, Windows)
+2. Downloads the appropriate Vale binary
+3. Installs it in the project root
+4. Makes it executable (`chmod 0755`)
+
+### Manual Installation
+
+If automatic installation fails, install Vale manually:
+
+```bash
+# Install Vale globally
+brew install vale  # macOS
+sudo apt-get install vale  # Ubuntu/Debian
+choco install vale  # Windows
+
+# Or download from GitHub
+wget https://github.com/errata-ai/vale/releases/latest/download/vale_Linux_64-bit.tar.gz
+tar -xvzf vale_Linux_64-bit.tar.gz
+```
+
+## Alternative Deployment Platforms
+
+### Vercel
+
+1. Install Vercel CLI:
+
+```bash
+npm install -g vercel
+```
+
+2. Deploy:
+
+```bash
+vercel
+```
+
+3. Ensure Vale binary is included:
+   - Add `vale` to `.vercelignore` exceptions
+   - Configure `includeFiles` in `vercel.json`
+
+### Docker
+
+Create a `Dockerfile`:
+
+```dockerfile
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install Vale
+RUN apk add --no-cache wget tar && \
+    wget https://github.com/errata-ai/vale/releases/latest/download/vale_Linux_64-bit.tar.gz && \
+    tar -xvzf vale_Linux_64-bit.tar.gz && \
+    mv vale /usr/local/bin/ && \
+    rm vale_Linux_64-bit.tar.gz
+
+# Copy application files
+COPY package*.json ./
+RUN npm ci --only=production
+
+COPY . .
+
+# Build Next.js app
+RUN npm run build
+
+EXPOSE 3000
+
+CMD ["npm", "start"]
+```
+
+Build and run:
+
+```bash
+docker build -t verbalize .
+docker run -p 3000:3000 verbalize
+```
+
+## Performance Considerations
+
+<Warning>
+  Serverless function timeout limits may impact large document processing:
+  - Netlify Functions: 10 seconds (default)
+  - Vercel Functions: 10 seconds (hobby), 60 seconds (pro)
+  - AWS Lambda: 15 minutes (max)
+</Warning>
+
+For large documents (> 100KB), consider:
+- Increasing function timeout limits
+- Implementing request chunking
+- Using a dedicated server deployment
+
+## Post-Deployment Checklist
+
+<Check>
+  Verify Vale binary is executable:
+  ```bash
+  vale --version
+  ```
+</Check>
+
+<Check>
+  Test the linting API endpoint:
+  ```bash
+  curl -X POST https://your-domain.com/api/lint \
+    -H "Content-Type: application/json" \
+    -d '{"text":"This is a test.","style":"Google"}'
+  ```
+</Check>
+
+<Check>
+  Verify style guides are accessible:
+  ```bash
+  ls styles/
+  # Should show: Google/ Microsoft/ RedHat/
+  ```
+</Check>
+
+<Check>
+  Check function logs for errors:
+  - Netlify: Functions tab in dashboard
+  - Vercel: Deployments > Functions
+</Check>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Vale binary not found">
+    **Error**: `spawn vale ENOENT`
+    
+    **Solution**:
+    1. Verify `postinstall` script ran during deployment
+    2. Check build logs for Vale installation errors
+    3. Manually include Vale in `included_files` (Netlify) or `includeFiles` (Vercel)
+    4. Ensure Vale binary has execute permissions (`chmod 755`)
+  </Accordion>
+
+  <Accordion title="Function timeout errors">
+    **Error**: `Request timeout after 10 seconds`
+    
+    **Solution**:
+    1. Reduce document size (split into chunks)
+    2. Increase function timeout in platform settings
+    3. Optimize Vale configuration (disable unused styles)
+  </Accordion>
+
+  <Accordion title="Styles not loading">
+    **Error**: `Could not find style 'Google'`
+    
+    **Solution**:
+    1. Verify `styles/**` is included in deployment bundle
+    2. Check that `.vale.ini` references correct `StylesPath`
+    3. Run `vale sync` locally and commit styles to repository
+  </Accordion>
+</AccordionGroup>
+
+## Related Resources
+
+- [Environment Variables](/configuration/environment-variables)
+- [Vale Configuration](/configuration/vale-config)
+- [Next.js Deployment Documentation](https://nextjs.org/docs/deployment)
+- [Netlify Functions Documentation](https://docs.netlify.com/functions/overview/)

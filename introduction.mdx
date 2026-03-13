@@ -1,0 +1,145 @@
+---
+title: Introduction
+description: A web-based assistant that helps technical writers improve documentation quality through real-time style guide linting
+---
+
+# Welcome to Verbalize
+
+Verbalize is a powerful web-based assistant designed specifically for technical writers who want to ensure their documentation adheres to industry-standard style guides. Built with [Vale](https://vale.sh/), the leading prose linting engine, Verbalize provides instant feedback on your writing to help you maintain consistency, clarity, and professionalism.
+
+## What is Verbalize?
+
+Verbalize combines a modern, intuitive interface with the powerful Vale linting engine to create a seamless writing and validation workflow. Write your documentation in Markdown, preview it in real-time, and receive immediate feedback on style violations—all in a single, unified workspace.
+
+<CardGroup cols={2}>
+  <Card title="Real-Time Linting" icon="bolt">
+    Get instant feedback as you lint your documentation against professional style guides including Google, Microsoft, and Red Hat standards.
+  </Card>
+  <Card title="Live Markdown Preview" icon="eye">
+    See how your documentation will render in real-time with synchronized scrolling between editor and preview.
+  </Card>
+  <Card title="Custom Rules Support" icon="file-code">
+    Upload your own Vale rules (`.yml` files) to enforce organization-specific style requirements alongside standard guides.
+  </Card>
+  <Card title="Multi-Style Validation" icon="check-double">
+    Choose from Google Developer, Microsoft Writing, or Red Hat documentation style guides for comprehensive validation.
+  </Card>
+</CardGroup>
+
+## Who is Verbalize For?
+
+Verbalize is designed for anyone who writes technical documentation:
+
+- **Technical Writers** crafting API documentation, user guides, or tutorials
+- **Developer Advocates** creating blog posts and developer resources
+- **Documentation Teams** maintaining consistency across large documentation sets
+- **Open Source Contributors** ensuring contributions meet project style standards
+- **Content Teams** enforcing brand voice and style guidelines
+
+## Key Features at a Glance
+
+<Info>
+  Verbalize processes your documentation entirely server-side, with support for documents up to 1MB in size. The Vale engine runs on-demand, ensuring your text is validated against the latest style guide rules.
+</Info>
+
+### Three-Column Workflow
+
+Verbalize's interface is organized into three synchronized panels:
+
+1. **Editor** - Write your Markdown documentation with character count tracking
+2. **Preview** - See rendered output with synchronized scrolling
+3. **Linting Alerts** - View detailed style violations with severity levels (error, warning, suggestion)
+
+### Detailed Diagnostics
+
+Every linting alert includes:
+
+- **Line number** and precise text span location
+- **Severity level** (error, warning, or suggestion)
+- **Clear message** explaining the style issue
+- **Rule name** for reference and learning
+- **External links** to style guide documentation for context
+
+### Dark Mode Support
+
+Built with `next-themes`, Verbalize automatically adapts to your system preferences and includes a manual theme toggle for comfortable writing in any lighting condition.
+
+## Architecture Overview
+
+Verbalize is built on modern web technologies:
+
+<CodeGroup>
+```typescript Frontend
+// Next.js 16 with App Router
+// React 19 for UI components
+// Tailwind CSS for styling
+// react-markdown for preview rendering
+// Lucide React for icons
+```
+
+```typescript Backend
+// Next.js API Routes for serverless functions
+// Vale CLI for prose linting
+// Temporary file handling for Vale integration
+// Support for custom rule injection
+```
+</CodeGroup>
+
+The application uses a **request-response architecture** where:
+
+1. User text is sent to `/api/lint` endpoint
+2. A temporary file is created for Vale to process
+3. Vale binary executes with dynamic configuration
+4. Results are parsed and returned as JSON
+5. Frontend displays diagnostics with clickable navigation
+
+<Note>
+  The Vale binary is automatically installed during `npm install` via a post-install script (`scripts/install-vale.js`), ensuring the linting engine is always available.
+</Note>
+
+## Technology Stack
+
+| Component | Technology | Purpose |
+|-----------|-----------|----------|
+| **Framework** | Next.js 16 (App Router) | Server-side rendering and API routes |
+| **Language** | TypeScript | Type-safe development |
+| **Styling** | Tailwind CSS | Utility-first styling with dark mode |
+| **Linting Engine** | Vale CLI | Prose linting and style validation |
+| **Markdown Rendering** | react-markdown | Safe Markdown-to-HTML conversion |
+| **Icons** | Lucide React | Consistent icon system |
+| **Testing** | Playwright | End-to-end testing |
+
+## Style Guides Included
+
+Verbalize ships with three professionally maintained style guides:
+
+<Card title="Google Developer Documentation Style Guide" icon="google" href="https://developers.google.com/style">
+  Comprehensive rules for clear, consistent, and user-friendly developer documentation. Covers voice, tone, grammar, formatting, and accessibility.
+</Card>
+
+<Card title="Microsoft Writing Style Guide" icon="microsoft" href="https://learn.microsoft.com/style-guide">
+  Microsoft's modern approach to technical communication, emphasizing simple, conversational language that puts customers first.
+</Card>
+
+<Card title="Red Hat Documentation Style Guide" icon="hat-wizard" href="https://redhat-documentation.github.io/">
+  Open source documentation standards from Red Hat, focusing on clarity, precision, and consistency in technical writing.
+</Card>
+
+## Data Privacy
+
+<Info>
+  All linting operations occur server-side within temporary directories that are immediately cleaned up after processing. Verbalize does not store, log, or transmit your documentation content to any external services.
+</Info>
+
+## Next Steps
+
+Ready to start improving your documentation?
+
+<CardGroup cols={2}>
+  <Card title="Quickstart Guide" icon="rocket" href="/quickstart">
+    Get up and running in minutes with our step-by-step quickstart guide.
+  </Card>
+  <Card title="Features Overview" icon="sparkles" href="/features">
+    Explore all of Verbalize's capabilities and learn how to make the most of each feature.
+  </Card>
+</CardGroup>

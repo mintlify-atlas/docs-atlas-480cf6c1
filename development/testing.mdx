@@ -1,0 +1,411 @@
+---
+title: Running Tests
+description: Test your changes with Playwright end-to-end tests
+icon: flask
+---
+
+## Overview
+
+Verbalize uses **Playwright** for end-to-end testing. Tests verify the complete user workflow, from entering text to viewing linting results.
+
+<Info>
+  Playwright tests run against a real browser (Chromium) with the dev server running on `localhost:3000`.
+</Info>
+
+## Prerequisites
+
+Before running tests, ensure:
+
+1. Dependencies are installed (`npm install`)
+2. Playwright browsers are installed (done automatically during `npm install`)
+3. The development server is **NOT** running (tests will start it automatically)
+
+## Running Tests
+
+### Basic Test Commands
+
+<CodeGroup>
+```bash Run all tests
+npm test
+```
+
+```bash Run specific test file
+npx playwright test tests/e2e.spec.ts
+```
+
+```bash Run tests in UI mode
+npx playwright test --ui
+```
+
+```bash Run tests in debug mode
+npx playwright test --debug
+```
+
+```bash Run tests headed (visible browser)
+npx playwright test --headed
+```
+</CodeGroup>
+
+### Test Output
+
+Successful test run:
+```
+Running 4 tests using 1 worker
+
+  ✓  1 Writer Assistant › should have the correct title (2.3s)
+  ✓  2 Writer Assistant › should toggle dark mode correctly (1.8s)
+  ✓  3 Writer Assistant › should perform basic linting (5.2s)
+  ✓  4 Writer Assistant › API should handle custom rules (3.1s)
+
+  4 passed (12.4s)
+```
+
+## Test Configuration
+
+The Playwright configuration is defined in `playwright.config.ts`:
+
+```typescript playwright.config.ts
+import { defineConfig, devices } from '@playwright/test';
+
+export default defineConfig({
+  testDir: './tests',
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 2 : 0,
+  workers: process.env.CI ? 1 : undefined,
+  reporter: 'html',
+  use: {
+    baseURL: 'http://localhost:3000',
+    trace: 'on-first-retry',
+  },
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+  ],
+});
+```
+
+<Accordion title="Configuration breakdown">
+  - **testDir**: `./tests` - Location of test files
+  - **fullyParallel**: `true` - Run tests in parallel when possible
+  - **forbidOnly**: `true` in CI - Prevent `.only()` tests in CI
+  - **retries**: `2` in CI, `0` locally - Retry failed tests in CI
+  - **workers**: `1` in CI - Single worker for stability in CI
+  - **reporter**: `html` - Generate HTML report
+  - **baseURL**: `http://localhost:3000` - App URL for tests
+  - **trace**: `on-first-retry` - Capture trace on retry
+  - **projects**: Chromium only - Desktop Chrome simulation
+</Accordion>
+
+## Test Suites
+
+### E2E Tests (`tests/e2e.spec.ts`)
+
+Core functionality tests:
+
+<Steps>
+  <Step title="Page Load & Title">
+    Verifies the app loads and has the correct page title.
+
+    ```typescript
+    test('should have the correct title', async ({ page }) => {
+      await page.goto('/');
+      await expect(page).toHaveTitle(/Writer Assistant/);
+    });
+    ```
+  </Step>
+
+  <Step title="Dark Mode Toggle">
+    Tests theme switching functionality.
+
+    ```typescript
+    test('should toggle dark mode correctly', async ({ page }) => {
+      await page.goto('/');
+      const html = page.locator('html');
+      const themeToggle = page.getByTitle('Toggle Theme');
+      
+      const isInitialDark = await html.evaluate(
+        el => el.classList.contains('dark')
+      );
+      
+      await themeToggle.click();
+      
+      await expect(async () => {
+        const isDarkAfter = await html.evaluate(
+          el => el.classList.contains('dark')
+        );
+        expect(isDarkAfter).not.toBe(isInitialDark);
+      }).toPass();
+    });
+    ```
+  </Step>
+
+  <Step title="Basic Linting Flow">
+    Tests the complete lint workflow: input text → click lint → view results.
+
+    ```typescript
+    test('should perform basic linting', async ({ page }) => {
+      await page.goto('/');
+      const editor = page.locator('textarea');
+      await editor.fill('We use this in order to test the linting.');
+      
+      const lintButton = page.getByText('Run Linting');
+      await lintButton.click();
+      
+      const alertCards = page.locator('.p-4.rounded-xl.border');
+      await expect(alertCards.first()).toBeVisible({ timeout: 15000 });
+      
+      const count = await alertCards.count();
+      expect(count).toBeGreaterThan(0);
+    });
+    ```
+
+    <Info>
+      The text "We use this in order to test" triggers Google style guide warnings about wordiness.
+    </Info>
+  </Step>
+
+  <Step title="API Custom Rules">
+    Tests the API endpoint directly with custom Vale rules.
+
+    ```typescript
+    test('API should handle custom rules', async ({ request }) => {
+      const response = await request.post('/api/lint', {
+        data: {
+          text: 'This is extremely very good.',
+          style: 'Google',
+          customRules: [
+            {
+              name: 'test-rule.yml',
+              content: `extends: existence
+message: "Avoid using '%s'"
+level: error
+tokens:
+  - extremely`
+            }
+          ]
+        }
+      });
+      
+      expect(response.ok()).toBeTruthy();
+      const results = await response.json();
+      expect(Array.isArray(results)).toBeTruthy();
+      expect(
+        results.some(a => a.Check === 'Custom.test-rule')
+      ).toBeTruthy();
+    });
+    ```
+  </Step>
+</Steps>
+
+## Viewing Test Reports
+
+After running tests, view the HTML report:
+
+```bash
+npx playwright show-report
+```
+
+This opens an interactive report showing:
+- ✅ Test results (passed/failed)
+- ⏱️ Execution times
+- 📸 Screenshots (on failure)
+- 🎬 Video recordings (if enabled)
+- 📋 Test traces (on retry)
+
+## Writing New Tests
+
+### Test Structure
+
+Follow this pattern for new tests:
+
+```typescript tests/new-feature.spec.ts
+import { test, expect } from '@playwright/test';
+
+test.describe('Feature Name', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+  });
+
+  test('should do something', async ({ page }) => {
+    // Arrange: Set up test state
+    const editor = page.locator('textarea');
+    await editor.fill('Test content');
+    
+    // Act: Perform action
+    const button = page.getByText('Run Linting');
+    await button.click();
+    
+    // Assert: Verify outcome
+    await expect(page.locator('.alert')).toBeVisible();
+  });
+});
+```
+
+### Best Practices
+
+<AccordionGroup>
+  <Accordion title="Use semantic selectors">
+    Prefer accessible selectors over CSS classes:
+    
+    ```typescript
+    // ✅ Good: Semantic and stable
+    page.getByRole('button', { name: 'Run Linting' })
+    page.getByLabel('Text editor')
+    page.getByTitle('Toggle Theme')
+    
+    // ❌ Bad: Fragile and unclear
+    page.locator('.btn-primary')
+    page.locator('div > button:nth-child(2)')
+    ```
+  </Accordion>
+
+  <Accordion title="Wait for actions to complete">
+    Always wait for async operations:
+    
+    ```typescript
+    // ✅ Good: Explicit wait
+    await expect(page.locator('.alert')).toBeVisible({ timeout: 15000 });
+    
+    // ❌ Bad: No waiting
+    const alert = page.locator('.alert');
+    expect(alert).toBeVisible(); // Might fail due to timing
+    ```
+  </Accordion>
+
+  <Accordion title="Isolate tests">
+    Each test should be independent:
+    
+    ```typescript
+    // ✅ Good: Clean state per test
+    test.beforeEach(async ({ page }) => {
+      await page.goto('/');
+    });
+    
+    test('test 1', async ({ page }) => {
+      // Starts fresh
+    });
+    
+    test('test 2', async ({ page }) => {
+      // Also starts fresh
+    });
+    ```
+  </Accordion>
+
+  <Accordion title="Test user workflows, not implementation">
+    Focus on what users do, not how it's coded:
+    
+    ```typescript
+    // ✅ Good: Tests user behavior
+    test('should lint documentation', async ({ page }) => {
+      await page.locator('textarea').fill('Some text');
+      await page.getByText('Run Linting').click();
+      await expect(page.locator('.alert')).toBeVisible();
+    });
+    
+    // ❌ Bad: Tests implementation details
+    test('should call POST /api/lint', async ({ page }) => {
+      // Too coupled to implementation
+    });
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Debugging Failed Tests
+
+### Using Debug Mode
+
+Run tests with Playwright Inspector:
+
+```bash
+npx playwright test --debug
+```
+
+This opens the Playwright Inspector where you can:
+- Step through test actions
+- Inspect page state
+- View selector recommendations
+- Take screenshots
+
+### Using Traces
+
+View detailed traces of failed tests:
+
+```bash
+# Run tests (traces captured on retry)
+npm test
+
+# View trace for failed test
+npx playwright show-trace test-results/*/trace.zip
+```
+
+Traces show:
+- 📸 Screenshots at each step
+- 🌐 Network requests
+- 📝 Console logs
+- 🎯 DOM snapshots
+
+### Common Issues
+
+<Warning>
+  **Test timeout errors**: Increase timeout for slow operations:
+  ```typescript
+  await expect(element).toBeVisible({ timeout: 30000 }); // 30s
+  ```
+</Warning>
+
+<Warning>
+  **Selector not found**: Verify element exists:
+  ```bash
+  npx playwright test --debug
+  # Use Inspector to find correct selector
+  ```
+</Warning>
+
+<Warning>
+  **Dev server not running**: Tests auto-start dev server, but ensure port 3000 is free:
+  ```bash
+  lsof -ti:3000 | xargs kill -9
+  ```
+</Warning>
+
+## CI/CD Integration
+
+Tests run automatically in CI with these adjustments:
+
+```yaml .github/workflows/test.yml
+name: Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+      - run: npm ci
+      - run: npx playwright install --with-deps
+      - run: npm test
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Architecture" icon="sitemap" href="/development/architecture">
+    Understand the codebase structure
+  </Card>
+  
+  <Card title="Contributing" icon="code-pull-request" href="/development/contributing">
+    Submit your first contribution
+  </Card>
+</CardGroup>
