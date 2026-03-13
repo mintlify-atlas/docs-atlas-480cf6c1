@@ -1,0 +1,84 @@
+{
+  "projectType": "saas",
+  "projectName": "Verbalize",
+  "projectDescription": "A web-based assistant for technical writers that provides real-time linting of documentation using Vale style guides.",
+  "theme": "almond",
+  "primaryColor": "#2563eb",
+  "lightColor": "#3b82f6",
+  "darkColor": "#1e40af",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "features"
+            ]
+          },
+          {
+            "group": "User Guide",
+            "pages": [
+              "user-guide/using-the-editor",
+              "user-guide/understanding-results",
+              "user-guide/style-guides",
+              "user-guide/custom-rules"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/vale-config",
+              "configuration/deployment",
+              "configuration/environment-variables"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Endpoints",
+            "pages": [
+              "api-reference/overview",
+              "api-reference/lint"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Development",
+        "groups": [
+          {
+            "group": "Contributing",
+            "pages": [
+              "development/setup",
+              "development/testing",
+              "development/architecture",
+              "development/contributing"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Real-time documentation linting with Vale",
+    "Support for Google, Microsoft, and Red Hat style guides",
+    "Live Markdown preview with synchronized scrolling",
+    "Custom rule upload for personalized validation",
+    "Dark mode support with responsive design",
+    "Document import/export functionality"
+  ],
+  "publicApiSurface": [
+    "POST /api/lint - Lint documentation text against selected style guide",
+    "ValeAlert interface - Linting result structure",
+    "Style guide selection (Google, Microsoft, RedHat)",
+    "Custom rule upload (.yml format)",
+    "Document upload (.md, .mdx formats)"
+  ]
+}
